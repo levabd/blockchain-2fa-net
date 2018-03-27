@@ -45,22 +45,21 @@ services:
           --endpoint tcp://validator:8800 \
           --bind component:tcp://eth0:4004 \
           --bind network:tcp://eth0:8800 \
-          --scheduler parallel \
         \""
     networks:
       - public
 
-  shell:
-    image: hyperledger/sawtooth-all:1.0
-    container_name: sawtooth-shell-public
-    depends_on:
-      - rest-api
-    entrypoint: "bash -c \"\
-        sawtooth keygen && \
-        tail -f /dev/null \
-        \""
-    networks:
-      - public
+#  shell:
+#    image: hyperledger/sawtooth-all:1.0
+#    container_name: sawtooth-shell-public
+#    depends_on:
+#      - rest-api
+#    entrypoint: "bash -c \"\
+#        sawtooth keygen && \
+#        tail -f /dev/null \
+#        \""
+#    networks:
+#      - public
 
   rest-api:
     image: hyperledger/sawtooth-rest-api:1.0
@@ -73,52 +72,52 @@ services:
     networks:
       - public
 
-  mongo:
-    container_name: mongo
-    image: mongo
-    volumes:
-      - ./data:/data/db
-    ports:
-      - "27017:27017"
-    networks:
-      - public
+#  mongo:
+#    container_name: mongo
+#    image: mongo
+#    volumes:
+#      - ./data:/data/db
+#    ports:
+#      - "27017:27017"
+#    networks:
+#      - public
+#
+#  redis:
+#    container_name: redis
+#    image: redis
+#    networks:
+#      - public
+#    ports:
+#      - 6380:6379
 
-  redis:
-    container_name: redis
-    image: redis
-    networks:
-      - public
-    ports:
-      - 6380:6379
-
-  sawtooth-tfa-s-tp:
-    image: allatrack/sawtooth-tfa-s-tp:latest
-    container_name: sawtooth-tfa-s-tp
-    depends_on:
-      - validator
-      - rest-api
-    networks:
-      - public
-
-  sawtooth-tfa-sc-kaztel-tp:
-    image: allatrack/sawtooth-tfa-sc-tp:latest
-    container_name: sawtooth-tfa-sc-kaztel-tp
-    depends_on:
-      - validator
-      - rest-api
-    entrypoint: "node index.js tcp://validator:4004 kaztel 0.1"
-    networks:
-      - public
-
-  sawtooth-tfa-sc-egov-tp:
-    image: allatrack/sawtooth-tfa-sc-tp:latest
-    container_name: sawtooth-tfa-sc-egov-tp
-    depends_on:
-      - validator
-      - rest-api
-    entrypoint: "node index.js tcp://validator:4004 egov 0.1"
-    networks:
-      - public
+#  sawtooth-tfa-s-tp:
+#    image: allatrack/sawtooth-tfa-s-tp:latest
+#    container_name: sawtooth-tfa-s-tp
+#    depends_on:
+#      - validator
+#      - rest-api
+#    networks:
+#      - public
+#
+#  sawtooth-tfa-sc-kaztel-tp:
+#    image: allatrack/sawtooth-tfa-sc-tp:latest
+#    container_name: sawtooth-tfa-sc-kaztel-tp
+#    depends_on:
+#      - validator
+#      - rest-api
+#    entrypoint: "node index.js tcp://validator:4004 kaztel 0.1"
+#    networks:
+#      - public
+#
+#  sawtooth-tfa-sc-egov-tp:
+#    image: allatrack/sawtooth-tfa-sc-tp:latest
+#    container_name: sawtooth-tfa-sc-egov-tp
+#    depends_on:
+#      - validator
+#      - rest-api
+#    entrypoint: "node index.js tcp://validator:4004 egov 0.1"
+#    networks:
+#      - public
 
 #  tfa-entrance-api:
 #    container_name: tfa-entrance-api
@@ -128,27 +127,27 @@ services:
 #    ports:
 #      - 3000:3000
 
-  tfa-entrance-frontend:
-    container_name: tfa-entrance-frontend
-    image: allatrack/tfa-entrance-frontend
-    environment:
-      - PORT=3001
-      - API_URL=http://localhost:3000/v1/api
-      - VALIDATOR_API_URL=http://sawtooth-rest-api-public:8008
-    networks:
-      - public
-    ports:
-      - 3001:3001
-
-  tfa-cabinet:
-    container_name: tfa-cabinet
-    image: allatrack/tfa-cabinet
-    restart: always
-    build: .
-    depends_on:
-      - mongo
-    ports:
-      - 3002:8080
-    networks:
-      - public
+#  tfa-entrance-frontend:
+#    container_name: tfa-entrance-frontend
+#    image: allatrack/tfa-entrance-frontend
+#    environment:
+#      - PORT=3001
+#      - API_URL=http://localhost:3000/v1/api
+#      - VALIDATOR_API_URL=http://sawtooth-rest-api-public:8008
+#    networks:
+#      - public
+#    ports:
+#      - 3001:3001
+#
+#  tfa-cabinet:
+#    container_name: tfa-cabinet
+#    image: allatrack/tfa-cabinet
+#    restart: always
+#    build: .
+#    depends_on:
+#      - mongo
+#    ports:
+#      - 3002:8080
+#    networks:
+#      - public
 

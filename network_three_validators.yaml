@@ -27,6 +27,8 @@ services:
     expose:
       - 4004
       - 8800
+    ports:
+      - "4004:4004"
     command: "bash -c \"\
         sawadm keygen --force && \
         sawset genesis \
@@ -150,25 +152,25 @@ services:
     networks:
       - three_validators
 
-  sawtooth-tfa-sc-kaztel-tp-0:
-    image: allatrack/sawtooth-tfa-sc-tp:latest
-    container_name: sawtooth-tfa-sc-kaztel-tp-0
-    depends_on:
-      - validator-0
-      - rest-api-0
-    entrypoint: "node index.js tcp://validator-0:4004 kaztel 0.1"
-    networks:
-      - three_validators
+#  sawtooth-tfa-sc-kaztel-tp-0:
+#    image: allatrack/sawtooth-tfa-sc-tp:latest
+#    container_name: sawtooth-tfa-sc-kaztel-tp-0
+#    depends_on:
+#      - validator-0
+#      - rest-api-0
+#    entrypoint: "node index.js tcp://validator-0:4004 kaztel 0.1"
+#    networks:
+#      - three_validators
 
-  sawtooth-tfa-sc-egov-tp-0:
-    image: allatrack/sawtooth-tfa-sc-tp:latest
-    container_name: sawtooth-tfa-sc-egov-tp-0
-    depends_on:
-      - validator-0
-      - rest-api-0
-    entrypoint: "node index.js tcp://validator-0:4004 egov 0.1"
-    networks:
-      - three_validators
+#  sawtooth-tfa-sc-egov-tp-0:
+#    image: allatrack/sawtooth-tfa-sc-tp:latest
+#    container_name: sawtooth-tfa-sc-egov-tp-0
+#    depends_on:
+#      - validator-0
+#      - rest-api-0
+#    entrypoint: "node index.js tcp://validator-0:4004 egov 0.1"
+#    networks:
+#      - three_validators
 
   sawtooth-tfa-s-tp-1:
     image: allatrack/sawtooth-tfa-s-tp:latest
@@ -179,15 +181,15 @@ services:
     networks:
       - three_validators
 #
-  sawtooth-tfa-sc-kaztel-tp-1:
-    image: allatrack/sawtooth-tfa-sc-tp:latest
-    container_name: sawtooth-tfa-sc-kaztel-tp-1
-    depends_on:
-      - validator-1
-      - rest-api-1
-    entrypoint: "node index.js tcp://validator-1:4004 kaztel 0.1"
-    networks:
-      - three_validators
+#  sawtooth-tfa-sc-kaztel-tp-1:
+#    image: allatrack/sawtooth-tfa-sc-tp:latest
+#    container_name: sawtooth-tfa-sc-kaztel-tp-1
+#    depends_on:
+#      - validator-1
+#      - rest-api-1
+#    entrypoint: "node index.js tcp://validator-1:4004 kaztel 0.1"
+#    networks:
+#      - three_validators
 
   sawtooth-tfa-sc-egov-tp-1:
     image: allatrack/sawtooth-tfa-sc-tp:latest
@@ -208,15 +210,15 @@ services:
     networks:
       - three_validators
 
-  sawtooth-tfa-sc-kaztel-tp-2:
-    image: allatrack/sawtooth-tfa-sc-tp:latest
-    container_name: sawtooth-tfa-sc-kaztel-tp-2
-    depends_on:
-      - validator-2
-      - rest-api-2
-    entrypoint: "node index.js tcp://validator-2:4004 kaztel 0.1"
-    networks:
-      - three_validators
+#  sawtooth-tfa-sc-kaztel-tp-2:
+#    image: allatrack/sawtooth-tfa-sc-tp:latest
+#    container_name: sawtooth-tfa-sc-kaztel-tp-2
+#    depends_on:
+#      - validator-2
+#      - rest-api-2
+#    entrypoint: "node index.js tcp://validator-2:4004 kaztel 0.1"
+#    networks:
+#      - three_validators
 
   sawtooth-tfa-sc-egov-tp-2:
     image: allatrack/sawtooth-tfa-sc-tp:latest

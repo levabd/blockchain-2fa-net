@@ -7,7 +7,7 @@ const crypto = require('crypto')
 
 const _hash = (x) => crypto.createHash('sha512').update(x).digest('hex').toLowerCase()
 const cbor = require('cbor')
-const FAMILY_NAME = 'kaztel';
+const FAMILY_NAME = 'tfa';
 const FAMILY_NAMESPACE = _hash(FAMILY_NAME).substring(0, 6)
 const FAMILY_VERSION = '0.1';
 const {createHash} = require('crypto')
@@ -17,12 +17,12 @@ faker.locale = "ru";
 const request = require('request')
 const WebSocket = require('ws')
 
-const RECORd_NUMBER = 1000
+const RECORd_NUMBER = 100
 let c = 0
 let e = 0
 const makeRequest = (data) => {
     request.post({
-        url: `http://127.0.0.1:8000/batches`,
+        url: `http://127.0.0.1:8008/batches`,
         body: batchListBytes,
         headers: {'Content-Type': 'application/octet-stream'}
     }, (err, response) => {
@@ -61,7 +61,7 @@ const handle = function (transactions, i) {
 
     const randomPort = APIs[Math.floor(Math.random() * APIs.length)];
     request.post({
-        url: `http://127.0.0.1:8000/batches`,
+        url: `http://127.0.0.1:8008/batches`,
         body: batchListBytes,
         headers: {'Content-Type': 'application/octet-stream'}
     }, (err, response) => {
@@ -85,7 +85,7 @@ const handle = function (transactions, i) {
 }
 
 
-let ws = new WebSocket(`ws:127.0.0.1:8000/subscriptions`)
+let ws = new WebSocket(`ws:127.0.0.1:8008/subscriptions`)
 ws.onopen = () => {
     ws.send(JSON.stringify({
         'action': 'subscribe',
@@ -199,18 +199,17 @@ for (let i = 0; i <= RECORd_NUMBER; i++) {
                 Birthdate: 12452485,
             }
         }
-
         const phoneNumberPart = _hash(pn.toString()).slice(-64)
 
         // let address = FAMILY_NAMESPACE + _hash(payload.User.Uin +payload.User.PhoneNumber).slice(-64)
         let address = FAMILY_NAMESPACE + phoneNumberPart
 
-        // console.log('address', cntr, address);
+        console.log('address', address);
 
         const payloadBytes = cbor.encode(payload)
 
         const transactionHeaderBytes = protobuf.TransactionHeader.encode({
-            familyName: 'kaztel',
+            familyName: 'tfa',
             familyVersion: '0.1',
             inputs: [address],
             outputs: [address],

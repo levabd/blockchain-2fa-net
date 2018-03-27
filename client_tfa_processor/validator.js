@@ -108,7 +108,7 @@ const getuserValidationErrors = (user) => {
     return errors;
 };
 
-const getLogValidationErrors = (user, log) => {
+const getLogValidationErrors = (user) => {
     let errors = []
     if (isEmpty(user.Event)) {
         errors.push('Event is required')

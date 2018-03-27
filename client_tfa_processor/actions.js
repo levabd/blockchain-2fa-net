@@ -158,12 +158,14 @@ const _addLog = (context, address, data) => (possibleAddressValues) => {
         indexKey = helpers.getLatestIndex(logKeys)
     }
 
-    log.Code = helpers.generateCode(process.env['TRANSACTION_FAMILY_KEY'] + log.Event + phoneNumber + log.ActionTime)
-    console.log('log.Code', log.Code);
-    if (log.Code.Status && log.Code.Status === log_statuses.RESEND_CODE) {
-        log.Code.Status = log_statuses.RESEND_CODE
+    log.Code = helpers.generateCode(process.env['TRANSACTION_FAMILY_KEY'] + log.Event +
+        phoneNumber + log.ActionTime)
+
+
+    if (log.Status && log.Status === log_statuses.RESEND_CODE) {
+        log.Status = log_statuses.RESEND_CODE
     } else {
-        log.Code.Status = log_statuses.SEND_CODE
+        log.Status = log_statuses.SEND_CODE
     }
 
     const logIndex = parseInt(indexKey, 10)
@@ -222,7 +224,7 @@ const _verify = (context, address, data) => (possibleAddressValues) => {
 
     const stateUserLogsKeys = Object.keys(stateUser.Logs)
     const latestStateUserLogsKeysKey = helpers.getLatestIndex(stateUserLogsKeys)
-    console.log('latestStateUserLogsKeysKey', latestStateUserLogsKeysKey);
+
     stateUser.Logs[parseInt(latestStateUserLogsKeysKey, 10) + 1] = requestLog;
 
     return _setEntry(context, address, stateUser)
