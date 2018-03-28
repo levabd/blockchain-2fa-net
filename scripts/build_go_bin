@@ -1,0 +1,20 @@
+#!/bin/bash
+
+set -e
+
+top_dir=$(cd $(dirname $(dirname $0)) && pwd)
+
+echo -e "\033[0;32m--- Running protogen go ---\n\033[0m"
+$top_dir/bin/protogen go
+
+echo -e "\033[0;32m--- Building tfa-sc-tp-go ---\n\033[0m"
+export GOPATH=/go:$top_dir/sdk/go:/project/tfa/go
+cd /project/tfa/go/src/tfa/service_client
+mkdir -p /project/tfa/go/bin
+go get github.com/joaojeronimo/go-crc16
+go build -o /project/tfa/go/bin/tfa-service-client-tp-go
+
+echo -e "\033[0;32m--- Building tfa-s-tp-go ---\n\033[0m"
+cd /project/tfa/go/src/tfa/service
+mkdir -p /project/tfa/go/bin
+go build -o /project/tfa/go/bin/tfa-service-tp-go
