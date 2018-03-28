@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+# run the net
+echo 'restart the net with 1 validator'
+
+{ # try
+
+    docker rm -f $(docker ps -aq) && yes | docker network prune \
+         && docker-compose -f networks/network.yaml up -d
+
+} || { # catch
+   docker-compose -f networks/network.yaml up -d
+}
+

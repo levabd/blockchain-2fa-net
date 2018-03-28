@@ -1,0 +1,101 @@
+# Copyright 2017 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ------------------------------------------------------------------------------
+
+# Description:
+#   Builds an image to be used when developing in Go. The default CMD is to run
+#   build_go.
+#
+# Build:
+#   $ cd sawtooth-core/docker
+#   $ docker build . -f sawtooth-dev-go -t sawtooth-dev-go
+#
+# Run:
+#   $ cd sawtooth-core
+#   $ docker run -v $(pwd)/scripts:/project/sawtooth-core/bin \
+#                -v $(pwd)/sawtooth-core:/project/sawtooth-core \
+#                -v $(pwd)/go:/project/tfa/go \
+#                sawtooth-dev-go
+
+FROM ubuntu:xenial
+
+LABEL "install-type"="mounted"
+
+# install golang
+RUN apt-get update \
+ && yes | apt-get install software-properties-common python-software-properties \
+ && add-apt-repository ppa:longsleep/golang-backports \
+ && apt-get update \
+ && yes | apt-get install golang-go
+
+RUN echo "deb http://repo.sawtooth.me/ubuntu/ci xenial universe" >> /etc/apt/sources.list \
+ && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 8AA7AF1F1091A5FD \
+ && apt-get update \
+ && apt-get install -y -q --allow-downgrades \
+    build-essential \
+    git \
+    libssl-dev \
+    libzmq3-dev \
+    pkg-config \
+    wget \
+    openssl \
+    python3-grpcio-tools=1.1.3-1 \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
+
+ENV GOPATH=/go:/project/tfa/go/tfa_client:/project/tfa/go/tfa_service:/project/sawtooth-core/sdk/go
+
+RUN mkdir /go
+# install zeromq
+RUN wget https://github.com/zeromq/libzmq/releases/download/v4.2.2/zeromq-4.2.2.tar.gz \
+ && tar xvzf zeromq-4.2.2.tar.gz \
+   && apt-get update \
+   && apt-get install -y libtool pkg-config build-essential autoconf automake uuid-dev \
+   && cd zeromq-4.2.2 \
+   && ./configure \
+   && make install \
+   && ldconfig \
+   && ldconfig -p | grep zmq
+
+# install go packages
+RUN go get -u \
+    github.com/golang/protobuf/proto \
+    github.com/golang/protobuf/protoc-gen-go \
+    github.com/pebbe/zmq4 \
+    github.com/brianolson/cbor_go \
+    github.com/satori/go.uuid \
+    github.com/btcsuite/btcd/btcec \
+    github.com/jessevdk/go-flags \
+    github.com/pelletier/go-toml \
+    github.com/golang/mock/gomock \
+    github.com/golang/mock/mockgen \
+    golang.org/x/crypto/ripemd160 \
+    golang.org/x/crypto/ssh/terminal \
+    gopkg.in/fatih/set.v0
+
+EXPOSE 4004/tcp
+
+RUN mkdir -p /project/sawtooth-core/ \
+ && mkdir -p /var/log/sawtooth \
+ && mkdir -p /var/lib/sawtooth \
+ && mkdir -p /etc/sawtooth \
+ && mkdir -p /etc/sawtooth/keys \
+ && mkdir -p /project/tfa/go
+
+ENV PATH=$PATH:/project/sawtooth-core/bin:/go/bin
+
+WORKDIR /
+
+CMD build_go_bin
+

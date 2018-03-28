@@ -1,0 +1,303 @@
+# Copyright 2017 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ------------------------------------------------------------------------------
+
+version: "2.1"
+
+networks:
+  three_validators:
+
+services:
+
+  validator-0:
+    image: sawtooth-validator:latest
+    volumes:
+      - $SAWTOOTH_CORE:/project/sawtooth-core
+    expose:
+      - 4004
+      - 8800
+    ports:
+      - "4004:4004"
+    command: "bash -c \"\
+        sawadm keygen --force && \
+        sawset genesis \
+          -k /etc/sawtooth/keys/validator.priv \
+          -o config-genesis.batch && \
+        sawset proposal create \
+          -k /etc/sawtooth/keys/validator.priv \
+          sawtooth.consensus.algorithm=poet \
+          sawtooth.poet.report_public_key_pem=\
+          \\\"$$(cat /project/sawtooth-core/consensus/poet/simulator/packaging/simulator_rk_pub.pem)\\\" \
+          sawtooth.poet.valid_enclave_measurements=$$(poet enclave measurement) \
+          sawtooth.poet.valid_enclave_basenames=$$(poet enclave basename) \
+          -o config.batch && \
+        poet registration create -o poet.batch && \
+        sawadm genesis \
+          config-genesis.batch config.batch poet.batch && \
+        sawtooth-validator -v \
+            --endpoint tcp://validator-0:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+    \""
+    environment:
+      - PYTHONPATH="/project/sawtooth-core/consensus/poet/common:/project/sawtooth-core/consensus/poet/simulator:/project/sawtooth-core/consensus/poet/core"
+    stop_signal: SIGKILL
+    networks:
+      - three_validators
+
+  validator-1:
+    image: sawtooth-validator:latest
+    volumes:
+      - $SAWTOOTH_CORE:/project/sawtooth-core
+    expose:
+      - 4004
+      - 8800
+    depends_on:
+      - validator-0
+    command: "bash -c \"\
+        sawadm keygen --force && \
+        sawtooth-validator -v \
+          --endpoint tcp://validator-1:8800 \
+          --peers tcp://validator-0:8800 \
+          --bind component:tcp://eth0:4004 \
+          --bind network:tcp://eth0:8800 \
+    \""
+    environment:
+      - PYTHONPATH="/project/sawtooth-core/consensus/poet/common:/project/sawtooth-core/consensus/poet/simulator:/project/sawtooth-core/consensus/poet/core"
+    stop_signal: SIGKILL
+    networks:
+      - three_validators
+
+  validator-2:
+    image: sawtooth-validator:latest
+    volumes:
+      - $SAWTOOTH_CORE:/project/sawtooth-core
+    expose:
+      - 4004
+      - 8800
+    depends_on:
+      - validator-0
+      - validator-1
+    command: "bash -c \"\
+        sawadm keygen --force && \
+        sawtooth-validator -v \
+          --endpoint tcp://validator-2:8800 \
+          --peers tcp://validator-0:8800,tcp://validator-1:8800
+          --bind component:tcp://eth0:4004 \
+          --bind network:tcp://eth0:8800 \
+    \""
+    environment:
+      - PYTHONPATH="/project/sawtooth-core/consensus/poet/common:/project/sawtooth-core/consensus/poet/simulator:/project/sawtooth-core/consensus/poet/core"
+
+    stop_signal: SIGKILL
+    networks:
+      - three_validators
+
+  rest-api-0:
+    image: sawtooth-rest-api:latest
+    volumes:
+      - $SAWTOOTH_CORE:/project/sawtooth-core
+    expose:
+      - 4004
+    ports:
+      - "8000:8008"
+    command: sawtooth-rest-api -v --connect tcp://validator-0:4004 --bind rest-api-0:8008
+    stop_signal: SIGKILL
+    networks:
+      - three_validators
+
+  rest-api-1:
+    image: sawtooth-rest-api:latest
+    volumes:
+      - $SAWTOOTH_CORE:/project/sawtooth-core
+    expose:
+      - 4004
+    ports:
+      - "8001:8008"
+    command: sawtooth-rest-api -v --connect tcp://validator-1:4004 --bind rest-api-1:8008
+    stop_signal: SIGKILL
+    networks:
+      - three_validators
+
+  rest-api-2:
+    image: sawtooth-rest-api:latest
+    volumes:
+      - $SAWTOOTH_CORE:/project/sawtooth-core
+    expose:
+      - 4004
+    ports:
+      - "8002:8008"
+    command: sawtooth-rest-api -v --connect tcp://validator-2:4004 --bind rest-api-2:8008
+    stop_signal: SIGKILL
+    networks:
+      - three_validators
+
+  sawtooth-tfa-s-tp-0:
+    image: allatrack/sawtooth-tfa-s-tp:latest
+    container_name: sawtooth-tfa-s-tp-0
+    depends_on:
+      - validator-0
+      - rest-api-0
+    networks:
+      - three_validators
+
+#  sawtooth-tfa-sc-kaztel-tp-0:
+#    image: allatrack/sawtooth-tfa-sc-tp:latest
+#    container_name: sawtooth-tfa-sc-kaztel-tp-0
+#    depends_on:
+#      - validator-0
+#      - rest-api-0
+#    entrypoint: "node index.js tcp://validator-0:4004 kaztel 0.1"
+#    networks:
+#      - three_validators
+
+#  sawtooth-tfa-sc-egov-tp-0:
+#    image: allatrack/sawtooth-tfa-sc-tp:latest
+#    container_name: sawtooth-tfa-sc-egov-tp-0
+#    depends_on:
+#      - validator-0
+#      - rest-api-0
+#    entrypoint: "node index.js tcp://validator-0:4004 egov 0.1"
+#    networks:
+#      - three_validators
+
+  sawtooth-tfa-s-tp-1:
+    image: allatrack/sawtooth-tfa-s-tp:latest
+    container_name: sawtooth-tfa-s-tp-1
+    depends_on:
+      - validator-1
+      - rest-api-1
+    networks:
+      - three_validators
+#
+#  sawtooth-tfa-sc-kaztel-tp-1:
+#    image: allatrack/sawtooth-tfa-sc-tp:latest
+#    container_name: sawtooth-tfa-sc-kaztel-tp-1
+#    depends_on:
+#      - validator-1
+#      - rest-api-1
+#    entrypoint: "node index.js tcp://validator-1:4004 kaztel 0.1"
+#    networks:
+#      - three_validators
+
+  sawtooth-tfa-sc-egov-tp-1:
+    image: allatrack/sawtooth-tfa-sc-tp:latest
+    container_name: sawtooth-tfa-sc-egov-tp-1
+    depends_on:
+      - validator-1
+      - rest-api-1
+    entrypoint: "node index.js tcp://validator-1:4004 egov 0.1"
+    networks:
+      - three_validators
+
+  sawtooth-tfa-s-tp-2:
+    image: allatrack/sawtooth-tfa-s-tp:latest
+    container_name: sawtooth-tfa-s-tp-2
+    depends_on:
+      - validator-2
+      - rest-api-2
+    networks:
+      - three_validators
+
+#  sawtooth-tfa-sc-kaztel-tp-2:
+#    image: allatrack/sawtooth-tfa-sc-tp:latest
+#    container_name: sawtooth-tfa-sc-kaztel-tp-2
+#    depends_on:
+#      - validator-2
+#      - rest-api-2
+#    entrypoint: "node index.js tcp://validator-2:4004 kaztel 0.1"
+#    networks:
+#      - three_validators
+
+  sawtooth-tfa-sc-egov-tp-2:
+    image: allatrack/sawtooth-tfa-sc-tp:latest
+    container_name: sawtooth-tfa-sc-egov-tp-2
+    depends_on:
+      - validator-2
+      - rest-api-2
+    entrypoint: "node index.js tcp://validator-2:4004 egov 0.1"
+    networks:
+      - three_validators
+
+  settings-tp-0:
+    image: sawtooth-settings-tp:latest
+    volumes:
+      - $SAWTOOTH_CORE:/project/sawtooth-core
+    expose:
+      - 4004
+    command: settings-tp -v -C tcp://validator-0:4004
+    stop_signal: SIGKILL
+    networks:
+      - three_validators
+
+  settings-tp-1:
+    image: sawtooth-settings-tp:latest
+    volumes:
+      - $SAWTOOTH_CORE:/project/sawtooth-core
+    expose:
+      - 4004
+    command: settings-tp -v -C tcp://validator-1:4004
+    stop_signal: SIGKILL
+    networks:
+      - three_validators
+
+  settings-tp-2:
+    image: sawtooth-settings-tp:latest
+    volumes:
+      - $SAWTOOTH_CORE:/project/sawtooth-core
+    expose:
+      - 4004
+    command: settings-tp -v -C tcp://validator-2:4004
+    stop_signal: SIGKILL
+    networks:
+      - three_validators
+
+  poet-validator-registry-tp-0:
+    image: sawtooth-poet-validator-registry-tp:latest
+    volumes:
+      - $SAWTOOTH_CORE:/project/sawtooth-core
+    expose:
+      - 4004
+    command: poet-validator-registry-tp -v -C tcp://validator-0:4004
+    environment:
+      - PYTHONPATH="/project/sawtooth-core/consensus/poet/common"
+    stop_signal: SIGKILL
+    networks:
+      - three_validators
+
+  poet-validator-registry-tp-1:
+    image: sawtooth-poet-validator-registry-tp:latest
+    volumes:
+      - $SAWTOOTH_CORE:/project/sawtooth-core
+    expose:
+      - 4004
+    command: poet-validator-registry-tp -v -C tcp://validator-1:4004
+    environment:
+      - PYTHONPATH="/project/sawtooth-core/consensus/poet/common"
+    stop_signal: SIGKILL
+    networks:
+      - three_validators
+
+  poet-validator-registry-tp-2:
+    image: sawtooth-poet-validator-registry-tp:latest
+    volumes:
+      - $SAWTOOTH_CORE:/project/sawtooth-core
+    expose:
+      - 4004
+    command: poet-validator-registry-tp -v -C tcp://validator-2:4004
+    environment:
+      - PYTHONPATH="/project/sawtooth-core/consensus/poet/common"
+    stop_signal: SIGKILL
+    networks:
+      - three_validators

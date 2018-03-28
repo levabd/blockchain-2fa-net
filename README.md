@@ -1,55 +1,54 @@
-# Запуск сети
-_Все действия в каталоге processor_
-## Установить зависимости
+
+# Building Transaction Families 
+
+## Инструкция для разработчика 
+### Сборка Transaction Families
+Bin файлы собраны и находятся в каталоге 
 ```
-cd processor 
-npm i
+go/bin
 ```
-## Удалить все предыдущие контейнеры
+Влучае изменения кода transaction family выполните слудующие шаги:
+
+#### 1 Шаг - Сборка docker image - сборщик Go программ
 ```
-docker rm -f $(docker ps -aq) && yes | docker network prune
+# Build:
+cd docker \
+&& docker build . -f sawtooth-dev-go -t sawtooth-dev-go\ 
+&& cd ..
+
+``` 
+#### 2 Шаг - Клонировать репозиторий sawtooth-core
+Для сборки проекта нам необходимо иметь sawtooth-core который содержит все sdk для работы с блокчейном
+Выполняется из корня проекта
 ```
-## Запустить сеть
+git clone --branch v1.0.1 git@github.com:hyperledger/sawtooth-core.git sawtooth-core
 ```
-docker-compose -f network.yaml up
+#### 3 Шаг - Сборка проекта Go программы
+Выполняется из корня проекта
 ```
-## Запустить transaction processor
+cp $(pwd)/scripts/build_go_bin $(pwd)/sawtooth-core/bin
+docker run -v $(pwd)/sawtooth-core:/project/sawtooth-core \
+           -v $(pwd)/go:/project/tfa/go \
+           sawtooth-dev-go
 ```
-node index.js
+#### 3 Шаг - Сборка docker image - Transaction Families которые будут запукаться
+Выполняется из корня проекта
 ```
-# Тестовые запросы
-_Все действия в каталоге client_
-## Установить зависимости
-```
-cd client 
-npm i
-```
-## Положить данные в блокчейн
-```
-node index.js
-```
-## Прочитать данные из блокчейна
-```
-node check.js
+./scripts/build_go_images
+``` 
+
+## Запуск сети - 1 валидатор(для разработки)
 ```
 
-# Troubleshooting
-### Не проходят транзакции после перезапуска processor-а
-#### Шаг 1 Перезапусите сеть - выполните команды в каталоге processor:
 ```
-docker rm -f $(docker ps -aq) && yes | docker network prune`
-docker-compose -f network.yaml up
-или - запуск в фоне
-docker-compose -f network.yaml up -d
-```
-#### Шаг 2 Запустите processor в каталоге processor:
 
-```
-node index.js
-```
 
 # Полезные команды
-
+## Golang переменные окружения 
+```
+export GOROOT=/usr/local/go
+export GOPATH=$HOME/go:<путь к проекту>blockchain-2fa-net/go
+```
 ## Удалить сеть 
 ```
 
@@ -63,9 +62,3 @@ docker rmi $(docker images -f "dangling=true" -q)
 ```
 docker rmi $(docker images | awk '$1 ~ /fabric/ { print $3}')
 ```
-## Собрать образ проекта tfa_backend, tfa_frontend, tfa_cabinet
-```
-docker build -t allatrack/blockchain_tfa_backend .
-docker build -t allatrack/blockchain_tfa_frontend .
-docker build -t allatrack/blockchain_tfa_cabinet .
-```# blockchain-2fa-net
