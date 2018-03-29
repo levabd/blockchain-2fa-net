@@ -91,7 +91,7 @@ services:
       - 6380:6379
 
   sawtooth-tfa-sc-tp-go-kaztel:
-    image: allatrack/sawtooth-tfa-sc-tp-go
+    image: $ALLATRACK_DOCKER_ID/sawtooth-tfa-sc-tp-go
     container_name: sawtooth-tfa-sc-tp-go-kaztel
     depends_on:
       - validator
@@ -111,7 +111,7 @@ services:
       - public
 
   sawtooth-tfa-s-tp-go:
-    image: allatrack/sawtooth-tfa-s-tp-go
+    image: $ALLATRACK_DOCKER_ID/sawtooth-tfa-s-tp-go
     container_name: sawtooth-tfa-s-tp-go
     depends_on:
       - validator
@@ -120,36 +120,35 @@ services:
     networks:
       - public
 
-
-  tfa-entrance-api:
-    container_name: tfa-entrance-api
-    image: allatrack/tfa-entrance-backend
-    networks:
-      - public
-    ports:
-      - 3000:3000
-
-  tfa-entrance-frontend:
-    container_name: tfa-entrance-frontend
-    image: allatrack/tfa-entrance-frontend
-    environment:
-      - PORT=3001
-      - API_URL=http://localhost:3000/v1/api
-      - VALIDATOR_API_URL=http://sawtooth-rest-api-public:8008
-    networks:
-      - public
-    ports:
-      - 3001:3001
-
-  tfa-cabinet:
-    container_name: tfa-cabinet
-    image: allatrack/tfa-cabinet
-    restart: always
-    build: .
-    depends_on:
-      - mongo
-    ports:
-      - 3002:8080
-    networks:
-      - public
+#  tfa-entrance-api:
+#    container_name: tfa-entrance-api
+#    image: $ALLATRACK_DOCKER_ID/tfa-entrance-backend
+#    networks:
+#      - public
+#    ports:
+#      - 3000:3000
+#
+#  tfa-entrance-frontend:
+#    container_name: tfa-entrance-frontend
+#    image: $ALLATRACK_DOCKER_ID/tfa-entrance-frontend
+#    environment:
+#      - PORT=3001
+#      - API_URL=http://localhost:3000/v1/api
+#      - VALIDATOR_API_URL=http://sawtooth-rest-api-public:8008
+#    networks:
+#      - public
+#    ports:
+#      - 3001:3001
+#
+#  tfa-cabinet:
+#    container_name: tfa-cabinet
+#    image: allatrack/tfa-cabinet
+#    restart: always
+#    build: .
+#    depends_on:
+#      - mongo
+#    ports:
+#      - 3002:8080
+#    networks:
+#      - public
 
