@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ------------------------------------------------------------------------------
-
 # Description:
 #   Builds an image with Sawtooth TP Noop Go installed.
 #
@@ -21,32 +20,26 @@
 #   $              -t allatrack/sawtooth-tfa-s-tp-go .
 # Run:
 #   $ docker run allatrack/sawtooth-tfa-s-tp-go
-
 FROM ubuntu:xenial
-
 LABEL "install-type"="copied-bin"
-
-RUN apt-get update \
- && apt-get install -y -q \
-    wget \
-    libssl-dev \
-    libzmq3-dev \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/*
-
 # install zeromq
-RUN wget https://github.com/zeromq/libzmq/releases/download/v4.2.2/zeromq-4.2.2.tar.gz \
+RUN apt-get update \
+     && apt-get install -y -q —no-install-recommends \
+        wget \
+        libssl-dev \
+        libzmq3-dev \
+     && apt-get clean \
+     && rm -rf /var/lib/apt/lists/* \
+     && wget https://github.com/zeromq/libzmq/releases/download/v4.2.2/zeromq-4.2.2.tar.gz \
    && tar xvzf zeromq-4.2.2.tar.gz \
    && apt-get update \
-   && apt-get install -y libtool pkg-config build-essential autoconf automake uuid-dev \
+   && apt-get install -y —no-install-recommends libtool pkg-config build-essential autoconf automake uuid-dev \
    && cd zeromq-4.2.2 \
    && ./configure \
    && make install \
    && ldconfig \
-   && ldconfig -p | grep zmq
-
+   && ldconfig -p | grep zmq \
+   && rm -rf /var/lib/apt/lists/*
 ADD tfa-service-client-tp-go /usr/bin/tfa-service-client-tp-go
-
 EXPOSE 4004/tcp
-
 CMD ["tfa-service-client-tp-go", "-C", "tcp://validator:4004"]

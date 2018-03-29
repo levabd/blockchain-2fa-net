@@ -21,21 +21,17 @@
 #
 # Run:
 #   $ docker run sawtooth-noop-tp-go
-
 FROM ubuntu:xenial
-
 LABEL "install-type"="copied-bin"
-
-RUN apt-get update \
- && apt-get install -y -q \
-    wget \
-    libssl-dev \
-    libzmq3-dev \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/*
-
 # install zeromq
-RUN wget https://github.com/zeromq/libzmq/releases/download/v4.2.2/zeromq-4.2.2.tar.gz \
+RUN apt-get update \
+     && apt-get install -y -q \
+        wget \
+        libssl-dev \
+        libzmq3-dev \
+     && apt-get clean \
+     && rm -rf /var/lib/apt/lists/* \
+     && wget https://github.com/zeromq/libzmq/releases/download/v4.2.2/zeromq-4.2.2.tar.gz \
    && tar xvzf zeromq-4.2.2.tar.gz \
    && apt-get update \
    && apt-get install -y libtool pkg-config build-essential autoconf automake uuid-dev \
@@ -43,6 +39,6 @@ RUN wget https://github.com/zeromq/libzmq/releases/download/v4.2.2/zeromq-4.2.2.
    && ./configure \
    && make install \
    && ldconfig \
-   && ldconfig -p | grep zmq
-
+   && ldconfig -p | grep zmq \
+   && rm -rf /var/lib/apt/lists/*
 ADD tfa-service-tp-go /usr/bin/tfa-service-tp-go

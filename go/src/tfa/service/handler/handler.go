@@ -68,11 +68,6 @@ var RE = regexp.MustCompile(`^\+?[1-9]\d{1,14}$`)
 const (
 	NAME        = "tfa"
 	VERSION     = "0.1"
-	RESEND_CODE = "RESEND_CODE"
-	SEND_CODE   = "SEND_CODE"
-	EXPIRED     = "EXPIRED"
-	VALID       = "VALID"
-	INVALID     = "INVALID"
 )
 
 func (self *SCHandler) FamilyName() string {
@@ -168,9 +163,6 @@ func (self *SCHandler) Apply(request *processor_pb2.TpProcessRequest, context *p
 
 		user = self.UpdateUser(user, payload.User)
 		break
-	case "delete":
-		context.DeleteState([]string{address})
-		return nil
 	case "setPushToken":
 		user.PushToken = payload.PushToken
 		break;

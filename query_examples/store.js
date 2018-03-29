@@ -18,12 +18,12 @@ const request = require('request')
 const WebSocket = require('ws')
 
 
-const RECORd_NUMBER = 1000
+const RECORd_NUMBER = 100
 let c = 0
 let e = 0
 const makeRequest = (data) => {
     request.post({
-        url: `http://127.0.0.1:8008/batches`,
+        url: `http://127.0.0.1:8000/batches`,
         body: batchListBytes,
         headers: {'Content-Type': 'application/octet-stream'}
     }, (err, response) => {
@@ -62,7 +62,7 @@ const handle = function (transactions, i) {
 
     const randomPort = APIs[Math.floor(Math.random() * APIs.length)];
     request.post({
-        url: `http://127.0.0.1:8008/batches`,
+        url: `http://127.0.0.1:8000/batches`,
         body: batchListBytes,
         headers: {'Content-Type': 'application/octet-stream'}
     }, (err, response) => {
@@ -86,7 +86,7 @@ const handle = function (transactions, i) {
 }
 
 
-let ws = new WebSocket(`ws:127.0.0.1:8008/subscriptions`)
+let ws = new WebSocket(`ws:127.0.0.1:8000/subscriptions`)
 ws.onopen = () => {
     ws.send(JSON.stringify({
         'action': 'subscribe',

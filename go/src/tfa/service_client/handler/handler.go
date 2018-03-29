@@ -191,9 +191,6 @@ func (self *SCHandler) Apply(request *processor_pb2.TpProcessRequest, context *p
 
 		user = self.UpdateUser(user, payload.User)
 		break
-	case "delete":
-		context.DeleteState([]string{address})
-		return nil
 	case "addLog":
 		if payload.Log == (Log{}) {
 			return &processor.InternalError{
