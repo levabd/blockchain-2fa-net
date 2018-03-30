@@ -29,7 +29,7 @@ services:
       - 4004
       - 8800
     ports:
-      - "3000:8800"
+      - "3000:4004"
     command: "bash -c \"\
         sawadm keygen --force && \
         sawset genesis \
@@ -67,7 +67,7 @@ services:
     depends_on:
       - validator-0
     ports:
-      - "3001:8800"
+      - "3001:4004"
     command: "bash -c \"\
         sawadm keygen --force && \
         sawtooth-validator -v \
@@ -115,6 +115,7 @@ services:
       - 4004
     ports:
       - "8000:8008"
+      - "3002:8008"
     command: sawtooth-rest-api -v --connect tcp://validator-0:4004 --bind rest-api-0:8008
     stop_signal: SIGKILL
     networks:
