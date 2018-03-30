@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-echo 'start the 1 validator net'
+echo 'start the 3 validator net'
 top_dir=$(cd $(dirname $(dirname $0)) && pwd)
 
 export SAWTOOTH_CORE=$top_dir/sawtooth-core

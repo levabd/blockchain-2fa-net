@@ -29,8 +29,7 @@ services:
       - 4004
       - 8800
     ports:
-      - "4004:4004"
-      - "3000:4004"
+      - "3000:8800"
     command: "bash -c \"\
         sawadm keygen --force && \
         sawset genesis \
@@ -67,6 +66,8 @@ services:
       - 8800
     depends_on:
       - validator-0
+    ports:
+      - "3001:8800"
     command: "bash -c \"\
         sawadm keygen --force && \
         sawtooth-validator -v \
