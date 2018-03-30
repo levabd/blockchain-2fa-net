@@ -70,6 +70,8 @@ services:
       - $SAWTOOTH_CORE:/project/sawtooth-core
     expose:
       - 4004
+    depends_on:
+      - validator
     command: poet-validator-registry-tp -v -C tcp://validator:4004
     environment:
       - PYTHONPATH="/project/sawtooth-core/consensus/poet/common"
@@ -85,6 +87,8 @@ services:
       - 4004
     ports:
       - "3000:8008"
+    depends_on:
+      - validator
     command: sawtooth-rest-api -v --connect tcp://validator-2:4004 --bind rest-api-2:8008
     stop_signal: SIGKILL
     networks:
