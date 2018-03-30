@@ -27,7 +27,7 @@ services:
         sawadm keygen --force && \
         sawtooth-validator -v \
           --endpoint tcp://validator:8800 \
-          --peers tcp://80.249.153.109:3000, tcp://80.249.153.109:3001  \
+          --peers tcp://80.249.153.109:3000,tcp://80.249.153.109:3001  \
           --bind component:tcp://eth0:4004 \
           --bind network:tcp://eth0:8800 \
     \""
