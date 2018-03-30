@@ -29,7 +29,7 @@ services:
       - 4004
       - 8800
     ports:
-      - "3000:4004"
+      - "3000:8800"
     command: "bash -c \"\
         sawadm keygen --force && \
         sawset genesis \
@@ -48,6 +48,7 @@ services:
           config-genesis.batch config.batch poet.batch && \
         sawtooth-validator -v \
             --endpoint tcp://validator-0:8800 \
+            --peers tcp://176.36.70.236:3005 \
             --bind component:tcp://eth0:4004 \
             --bind network:tcp://eth0:8800 \
     \""
@@ -67,12 +68,11 @@ services:
     depends_on:
       - validator-0
     ports:
-      - "3001:4004"
+      - "3001:8800"
     command: "bash -c \"\
         sawadm keygen --force && \
         sawtooth-validator -v \
           --endpoint tcp://validator-1:8800 \
-          --peers tcp://validator-0:8800 \
           --bind component:tcp://eth0:4004 \
           --bind network:tcp://eth0:8800 \
     \""

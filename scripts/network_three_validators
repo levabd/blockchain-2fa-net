@@ -4,4 +4,4 @@ echo 'start the 3 validator net'
 top_dir=$(cd $(dirname $(dirname $0)) && pwd)
 
 export SAWTOOTH_CORE=$top_dir/sawtooth-core
-docker-compose -f networks/network_three_validators.yaml up
+docker-compose -f networks/network_three_validators.yaml up -d
