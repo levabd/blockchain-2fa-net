@@ -15,19 +15,19 @@
 #
 echo 'build allatrack/sawtooth-tfa-sc-tp-go bin programs'
 cd ./..
-docker run -v $(pwd)/bin:/project/sawtooth-core/bin \
-           -v $(pwd)/sawtooth-core:/project/sawtooth-core \
+cp $(pwd)/scripts/build_go_bin  $(pwd)/sawtooth-core/bin
+docker run -v $(pwd)/sawtooth-core:/project/sawtooth-core \
            -v $(pwd)/go:/project/tfa/go \
            sawtooth-dev-go
 
 echo 'build allatrack/sawtooth-tfa-sc-tp-go image image'
 top_dir=$(cd $(dirname $(dirname $0)) && pwd)
 export PATH=$PATH:$top_dir/go/bin
-docker build -f docker/sawtooth-tfa-service-client-tp-go -t allatrack/sawtooth-tfa-sc-tp-go ./docker
+docker build -f docker/bin/sawtooth-tfa-service-client-tp-go -t allatrack/sawtooth-tfa-sc-tp-go .
 
 echo 'build allatrack/sawtooth-tfa-sc-tp-go bin program'
 cd ./..
-docker run -v $(pwd)/bin:/project/sawtooth-core/bin \
+docker run -v $(pwd)/go/bin:/project/sawtooth-core/bin \
            -v $(pwd)/sawtooth-core:/project/sawtooth-core \
            -v $(pwd)/go:/project/tfa/go \
            sawtooth-dev-go
@@ -35,4 +35,4 @@ docker run -v $(pwd)/bin:/project/sawtooth-core/bin \
 echo 'build allatrack/sawtooth-tfa-sc-tp-go image image'
 top_dir=$(cd $(dirname $(dirname $0)) && pwd)
 export PATH=$PATH:$top_dir/go/bin
-docker build -f docker/sawtooth-tfa-service-client-tp-go -t allatrack/sawtooth-tfa-sc-tp-go ./docker
+docker build -f docker/bin/sawtooth-tfa-service-client-tp-go -t allatrack/sawtooth-tfa-sc-tp-go .

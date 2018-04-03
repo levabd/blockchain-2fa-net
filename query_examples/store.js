@@ -7,9 +7,10 @@ const crypto = require('crypto')
 
 const _hash = (x) => crypto.createHash('sha512').update(x).digest('hex').toLowerCase()
 const cbor = require('cbor')
-const FAMILY_NAME = 'egov';
+const FAMILY_NAME = 'kaztel';
 const FAMILY_NAMESPACE = _hash(FAMILY_NAME).substring(0, 6)
 const FAMILY_VERSION = '0.1';
+const PORT = '8008';
 const {createHash} = require('crypto')
 const {protobuf} = require('sawtooth-sdk')
 const faker = require('faker')
@@ -17,13 +18,12 @@ faker.locale = "ru";
 const request = require('request')
 const WebSocket = require('ws')
 
-
 const RECORd_NUMBER = 100
 let c = 0
 let e = 0
 const makeRequest = (data) => {
     request.post({
-        url: `http://127.0.0.1:8000/batches`,
+        url: `http://127.0.0.1:${PORT}/batches`,
         body: batchListBytes,
         headers: {'Content-Type': 'application/octet-stream'}
     }, (err, response) => {
@@ -37,6 +37,8 @@ const makeRequest = (data) => {
 
     })
 }
+// let start = new Date().getTime();
+
 const handle = function (transactions, i) {
 
     const batchHeaderBytes = protobuf.BatchHeader.encode({
@@ -62,14 +64,14 @@ const handle = function (transactions, i) {
 
     const randomPort = APIs[Math.floor(Math.random() * APIs.length)];
     request.post({
-        url: `http://127.0.0.1:8000/batches`,
+        url: `http://127.0.0.1:${PORT}/batches`,
         body: batchListBytes,
         headers: {'Content-Type': 'application/octet-stream'}
     }, (err, response) => {
 
         c++
         console.log('response', typeof response.body);
-        if (response.body['error']!==undefined) {
+        if (response.body['error'] !== undefined) {
             const code = response['error']['code']
             if (code === 31) {
                 console.log('make enoter request', err);
@@ -78,15 +80,14 @@ const handle = function (transactions, i) {
             }
         }
 
-        console.log('c', c);
-        if (c === RECORd_NUMBER) {
-            console.log(response.body)
-        }
+        console.log(response.body)
+        // var end = new Date().getTime();
+        // console.log("8000 Call to onmessage took " + (end - start) + " milliseconds.")
     })
 }
 
 
-let ws = new WebSocket(`ws:127.0.0.1:8000/subscriptions`)
+let ws = new WebSocket(`ws:127.0.0.1:${PORT}/subscriptions`)
 ws.onopen = () => {
     ws.send(JSON.stringify({
         'action': 'subscribe',
@@ -100,7 +101,7 @@ let recordsAdded = 0
 ws.onmessage = (mess) => {
     try {
         const data = JSON.parse(mess.data)
-        if (data.state_changes) {
+        if (data.state_changes.length) {
             var end = new Date().getTime();
             recordsAdded+=data.state_changes.length
             console.log('8000 mess length', recordsAdded);
@@ -177,13 +178,13 @@ for (let i = 0; i <= RECORd_NUMBER; i++) {
             headerSignature: signature0,
             payload: payloadBytes
         })
-        handle([transaction], cntr)
+        // handle([transaction], cntr)
 
-        // if (tlist.length===30){
-        //     handle(tlist, cntr)
-        //     tlist=[]
-        // } else {
-        //     tlist.push(transaction)
-        // }
+        if (tlist.length === 30) {
+            handle(tlist, cntr)
+            tlist = []
+        } else {
+            tlist.push(transaction)
+        }
     })(i);
 }

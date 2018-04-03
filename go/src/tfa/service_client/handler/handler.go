@@ -37,26 +37,26 @@ import (
 var logger *logging.Logger = logging.Get()
 
 type Log struct {
-	Event      string `json:"Event" bson:"Event" binding:"required"`
-	Status     string `json:"Status" bson:"Status" binding:"required"`
-	Code       uint16 `json:"Code" bson:"Code" binding:"required"`
-	ExpiredAt  uint64 `json:"ExpiredAt" bson:"ExpiredAt" binding:"required"`
-	Embeded    bool   `json:"Embeded" bson:",omitempty"`
-	ActionTime uint64 `json:"ActionTime" bson:"ActionTime" binding:"required"`
-	Method     string `json:"Method" bson:"Method" binding:"required"`
-	Cert       string `json:"Cert" bson:"Cert" bson:",omitempty"`
+	Event      string  `json:"Event" bson:"Event" binding:"required"`
+	Status     string  `json:"Status" bson:"Status" binding:"required"`
+	Code       uint16  `json:"Code" bson:"Code" binding:"required"`
+	ExpiredAt  float64 `json:"ExpiredAt" bson:"ExpiredAt" binding:"required"`
+	Embeded    bool    `json:"Embeded" bson:",omitempty"`
+	ActionTime float64 `json:"ActionTime" bson:"ActionTime" binding:"required"`
+	Method     string  `json:"Method" bson:"Method" binding:"required"`
+	Cert       string  `json:"Cert" bson:"Cert" bson:",omitempty"`
 }
 
 type User struct {
-	PhoneNumber    string      `json:"PhoneNumber" bson:"PhoneNumber" binding:"required"`
-	Uin            uint64      `json:"Uin" bson:"Uin" binding:"required"`
-	Name           string      `json:"Name" bson:"Name" binding:"required"`
-	IsVerified     bool        `json:",omitempty"`
-	Email          string      `json:"Email" bson:"Email" binding:"required"`
-	Sex            string      `json:"Sex" bson:"Sex" binding:"required"`
-	Birthdate      uint64      `json:"Birthdate" bson:"Birthdate" binding:"required"`
-	AdditionalData string      `json:",omitempty"`
-	Logs           map[int]Log `json:",omitempty"`
+	PhoneNumber    string         `json:"PhoneNumber" bson:"PhoneNumber" binding:"required"`
+	Uin            uint64         `json:"Uin" bson:"Uin" binding:"required"`
+	Name           string         `json:"Name" bson:"Name" binding:"required"`
+	IsVerified     bool           `json:",omitempty"`
+	Email          string         `json:"Email" bson:"Email" binding:"required"`
+	Sex            string         `json:"Sex" bson:"Sex" binding:"required"`
+	Birthdate      float64        `json:"Birthdate" bson:"Birthdate" binding:"required"`
+	AdditionalData string         `json:",omitempty"`
+	Logs           map[string]Log `json:",omitempty"`
 }
 
 type SCPayload struct {
@@ -83,9 +83,9 @@ var RE = regexp.MustCompile(`^\+?[1-9]\d{1,14}$`)
 const (
 	RESEND_CODE = "RESEND_CODE"
 	SEND_CODE   = "SEND_CODE"
-	EXPIRED   = "EXPIRED"
-	VALID   = "VALID"
-	INVALID   = "INVALID"
+	EXPIRED     = "EXPIRED"
+	VALID       = "VALID"
+	INVALID     = "INVALID"
 )
 
 var family_name, family_version string
@@ -94,7 +94,7 @@ func (self *SCHandler) SetFamilyName(name string) {
 	self.family_name = name
 }
 
-func (self *SCHandler) SetFamilyVersion(version string)  {
+func (self *SCHandler) SetFamilyVersion(version string) {
 	self.family_version = version
 }
 
@@ -203,7 +203,10 @@ func (self *SCHandler) Apply(request *processor_pb2.TpProcessRequest, context *p
 			return &processor.InvalidTransactionError{Msg: string(errorsMarshaled)}
 		}
 
-		user = self.AddLogToUser(user, payload.Log, phoneNumber)
+		user, err = self.AddLogToUser(user, payload.Log, phoneNumber)
+		if err!=nil{
+			return &processor.InvalidTransactionError{Msg: err.Error()}
+		}
 		break
 	case "varify":
 		if payload.Log == (Log{}) {
@@ -216,7 +219,10 @@ func (self *SCHandler) Apply(request *processor_pb2.TpProcessRequest, context *p
 			errorsMarshaled, _ := json.Marshal(errors)
 			return &processor.InvalidTransactionError{Msg: string(errorsMarshaled)}
 		}
-		user = self.Verify(user, payload.Log, phoneNumber)
+		user, err = self.Verify(user, payload.Log, phoneNumber)
+		if err!=nil{
+			return &processor.InvalidTransactionError{Msg: err.Error()}
+		}
 		break
 	default:
 		return &processor.InternalError{
@@ -254,13 +260,17 @@ func (self *SCHandler) UpdateUser(userOld, userUpdateData User) User {
 	return userOld
 }
 
-func (self *SCHandler) Verify(user User, log Log, phoneNumber string) User {
+func (self *SCHandler) Verify(user User, log Log, phoneNumber string) (User, error) {
 	keys := make([]int, 0, len(user.Logs))
-	mapLogsSend := make(map[int]Log)
+	mapLogsSend := make(map[string]Log)
 	for k, item := range user.Logs {
-		keys = append(keys, k)
-		if item.Status ==SEND_CODE || item.Status == RESEND_CODE {
-			mapLogsSend[k]=item
+		s, e := strconv.Atoi(k)
+		if e != nil {
+			return User{}, &processor.InternalError{Msg: "Logs key is invalid"}
+		}
+		keys = append(keys, s)
+		if item.Status == SEND_CODE || item.Status == RESEND_CODE {
+			mapLogsSend[k] = item
 		}
 	}
 	sort.Ints(keys)
@@ -268,12 +278,16 @@ func (self *SCHandler) Verify(user User, log Log, phoneNumber string) User {
 
 	keys = make([]int, 0, len(mapLogsSend))
 	for k := range mapLogsSend {
-		keys = append(keys, k)
+		s, e := strconv.Atoi(k)
+		if e != nil {
+			return User{}, &processor.InternalError{Msg: "Logs key is invalid"}
+		}
+		keys = append(keys, s)
 	}
 	sort.Ints(keys)
 	lastLogWithSendStatusIndex := keys[len(keys)-1]
-	latestLogWithSendCode := mapLogsSend[lastLogWithSendStatusIndex]
-
+	t := strconv.Itoa(lastLogWithSendStatusIndex)
+	latestLogWithSendCode := mapLogsSend[t]
 
 	var buffer bytes.Buffer
 	buffer.WriteString(self.FamilyName())
@@ -282,27 +296,32 @@ func (self *SCHandler) Verify(user User, log Log, phoneNumber string) User {
 	buffer.WriteString(strconv.Itoa(int(log.ActionTime)))
 	log.Code = crc16.Crc16([]byte(buffer.String()))
 
-	if latestLogWithSendCode.ExpiredAt <= log.ActionTime{
+	if latestLogWithSendCode.ExpiredAt <= log.ActionTime {
 		log.Status = EXPIRED
-	} else if latestLogWithSendCode.Code == self.getCode(log.Event,phoneNumber, log.ActionTime){
+	} else if latestLogWithSendCode.Code == self.getCode(log.Event, phoneNumber, log.ActionTime) {
 		log.Status = VALID;
-	} else{
+	} else {
 		log.Status = INVALID;
 	}
 
-	user.Logs[lastLogIndex]=log
+	t = strconv.Itoa(lastLogIndex)
+	user.Logs[t] = log
 
-	return user
+	return user, nil
 }
 
-func (self *SCHandler) AddLogToUser(user User, log Log, phoneNumber string) User {
+func (self *SCHandler) AddLogToUser(user User, log Log, phoneNumber string) (User, error) {
 	logIndex := 0
 	if len(user.Logs) == 0 {
-		user.Logs = make(map[int]Log)
+		user.Logs = make(map[string]Log)
 	} else {
 		keys := make([]int, 0, len(user.Logs))
 		for k := range user.Logs {
-			keys = append(keys, k)
+			s, e := strconv.Atoi(k)
+			if e != nil {
+				return User{}, &processor.InternalError{Msg: "Logs key is invalid"}
+			}
+			keys = append(keys, s)
 		}
 		sort.Ints(keys)
 		logIndex = keys[len(keys)-1]
@@ -315,25 +334,31 @@ func (self *SCHandler) AddLogToUser(user User, log Log, phoneNumber string) User
 
 	log.Status = status
 
-	log.Code = self.getCode(log.Event,phoneNumber, log.ActionTime)
+	log.Code = self.getCode(log.Event, phoneNumber, log.ActionTime)
 
 	if logIndex == 0 {
-		user.Logs[0] = log;
+		user.Logs["0"] = log;
 	} else {
-		user.Logs[ logIndex+1] = log;
+		t := strconv.Itoa(logIndex + 1)
+		user.Logs[t] = log;
 	}
-	logger.Debugf("code: %v", log.Code)
-	return user
+	logger.Info("code: %v", log.Code)
+	return user, nil
 }
 
-func (self *SCHandler) getCode(event, phoneNumber string, actionTime uint64) uint16{
+func FloatToString(input_num float64) string {
+	// to convert a float number to a string
+	return strconv.FormatFloat(input_num, 'f', 6, 64)
+}
+
+func (self *SCHandler) getCode(event, phoneNumber string, actionTime float64) uint16 {
 	var buffer bytes.Buffer
 	buffer.WriteString(self.FamilyName())
 	buffer.WriteString(event)
 	buffer.WriteString(phoneNumber)
-	buffer.WriteString(strconv.Itoa(int(actionTime)))
+	buffer.WriteString(FloatToString(actionTime))
 
-	return  crc16.Crc16([]byte(buffer.String()))
+	return crc16.Crc16([]byte(buffer.String()))
 }
 
 func EncodeCBOR(value interface{}) ([]byte, error) {

@@ -1,95 +1,113 @@
-version: "2.1"
+version: "3.5"
+
 networks:
-  validator_node:
+  overlay_net:
+    external: true
+
 services:
   settings-tp:
     restart: always
     image: hyperledger/sawtooth-settings-tp:1.0
     container_name: sawtooth-settings-tp-public
+#    network_mode: "host"
     depends_on:
       - validator
-    entrypoint: settings-tp -vv -C tcp://validator:4004
     networks:
-      - validator_node
+      - "overlay_net"
+    entrypoint: settings-tp -vv -C tcp://validator:4004
     stop_signal: SIGKILL
+#    extra_hosts:
+#      - "domain.docker.127.0.0.1:172.17.0.1"
+#    networks:
+#      net:
+#        ipv4_address: 172.16.238.10
 
   validator:
     restart: always
+    container_name: sawtooth-validator-0
     image: hyperledger/sawtooth-validator:1.0
-    volumes:
-      - $SAWTOOTH_CORE:/project/sawtooth-core
+#    network_mode: "host"
+    networks:
+      - "overlay_net"
+#    volumes:
+#      - $SAWTOOTH_CORE:/project/sawtooth-core
     expose:
       - 4004
       - 8800
     ports:
-      - "3005:8800"
+      - "3001:8800"
     command: "bash -c \"\
         sawadm keygen --force && \
         sawtooth-validator -v \
-          --endpoint tcp://validator:8800 \
-          --peers tcp://80.249.153.109:3000,tcp://80.249.153.109:3001  \
-          --bind component:tcp://eth0:4004 \
+          --peering dynamic \
           --bind network:tcp://eth0:8800 \
+          --bind component:tcp://eth0:4004 \
+          --endpoint tcp://validator:8800 \
+          --seeds tcp://172.19.0.1:3000 \
+          --scheduler serial \
+          --network trust \
     \""
     environment:
       - PYTHONPATH="/project/sawtooth-core/consensus/poet/common:/project/sawtooth-core/consensus/poet/simulator:/project/sawtooth-core/consensus/poet/core"
     stop_signal: SIGKILL
-    networks:
-      - validator_node
+#    networks:
+#      net:
+#        ipv4_address: 127.0.0.1
 
   sawtooth-tfa-sc-tp-go-kaztel:
     image: $ALLATRACK_DOCKER_ID/sawtooth-tfa-sc-tp-go
+#    network_mode: "host"
     container_name: sawtooth-tfa-sc-tp-go-kaztel
+    networks:
+      - "overlay_net"
+#    extra_hosts:
+#      - "domain.docker.127.0.0.1:172.17.0.1"
     depends_on:
       - validator
     entrypoint: "tfa-service-client-tp-go --connect=tcp://validator:4004 --family=kaztel --version=0.1"
-    networks:
-      - validator_node
-
-  sawtooth-tfa-sc-tp-go-egov:
-    image: $ALLATRACK_DOCKER_ID/sawtooth-tfa-sc-tp-go
-    container_name: sawtooth-tfa-sc-tp-g-egov
-    depends_on:
-      - validator
-    entrypoint: "tfa-service-client-tp-go --connect=tcp://validator:4004 --family=egov --version=0.1"
-    networks:
-      - validator_node
-
-  sawtooth-tfa-s-tp-go:
-    image: $ALLATRACK_DOCKER_ID/sawtooth-tfa-s-tp-go
-    container_name: sawtooth-tfa-s-tp-go
-    depends_on:
-      - validator
-    entrypoint: "tfa-service-tp-go --connect=tcp://validator:4004 --family=tfa --version=0.1"
-    networks:
-      - validator_node
+#    networks:
+#      net:
+#        ipv4_address: 172.16.238.12
 
   poet-validator-registry-tp:
     image: hyperledger/sawtooth-poet-validator-registry-tp:1.0
-    volumes:
-      - $SAWTOOTH_CORE:/project/sawtooth-core
-    expose:
-      - 4004
+#    volumes:
+#      - $SAWTOOTH_CORE:/project/sawtooth-core
+#    network_mode: "host"
+    networks:
+      - "overlay_net"
+#    expose:
+#      - 4006
+#    extra_hosts:
+#      - "domain.docker.127.0.0.1:172.17.0.1"
     depends_on:
       - validator
     command: poet-validator-registry-tp -v -C tcp://validator:4004
     environment:
       - PYTHONPATH="/project/sawtooth-core/consensus/poet/common"
     stop_signal: SIGKILL
-    networks:
-      - validator_node
+#    networks:
+#      net:
+#        ipv4_address: 172.16.238.13
 
   rest-api:
     image: hyperledger/sawtooth-rest-api:1.0
-    volumes:
-      - $SAWTOOTH_CORE:/project/sawtooth-core
+#    volumes:
+#      - $SAWTOOTH_CORE:/project/sawtooth-core
+#    network_mode: "host"
+    networks:
+      - "overlay_net"
+#    extra_hosts:
+#      - "domain.docker.127.0.0.1:172.17.0.1"
+    ports:
+      - "8008:8008"
     expose:
       - 4004
-    ports:
-      - "3000:8008"
+      - 8008
     depends_on:
       - validator
-    command: sawtooth-rest-api -v --connect tcp://validator:4004 --bind rest-api:8008
+    command: sawtooth-rest-api -v --connect tcp://validator:4004 --bind rest-api:8009
     stop_signal: SIGKILL
-    networks:
-      - validator_node
+#    networks:
+#      net:
+#        ipv4_address: 172.16.238.15
