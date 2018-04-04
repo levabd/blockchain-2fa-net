@@ -1,0 +1,100 @@
+# Example of configuring net
+#
+# Before run this file you must create docker swarm cluster:
+#  $ docker swarm init --advertise-addr 192.0.2.1
+#
+# Connect master swarm node:
+#  $ docker swarm join --token SWMTKN-1-0ircxo13hmepyaqb1ekjnezb4qef5jywdyl59rptvnlq3506io-b8o69vrwo8l2elh04a8b1g292 --advertise-addr <IP подключаемой (slave) docker-ноды>:2377 <IP подключающей (master) docker-ноды>:2377
+#
+# Prod-net creation
+#  $ docker network create --driver=overlay --attachable prod-net
+#
+# Run on master docker node:
+#  $ docker run -dit --name alpine1 --network test-net alpine
+#
+# Run on slave docker node:
+#  $ docker run -dit --name alpine2 --network test-net alpine
+
+version: "3.5"
+
+networks:
+  prod-net:
+    external: true
+
+services:
+  validator-5:
+    image: hyperledger/sawtooth-validator:1.0
+    container_name: sawtooth-validator-default-5
+    expose:
+      - 4004
+      - 8800
+    command: |
+      bash -c "
+        sawadm keygen --force && \
+        sawtooth-validator -v \
+            --bind network:tcp://eth0:8800 \
+            --bind component:tcp://eth0:4004 \
+            --peering dynamic \
+            --endpoint tcp://validator-5:3000 \
+            --seeds tcp://validator-0.prod-net:8800 \
+            --scheduler serial \
+            --network trust
+      "
+    environment:
+      - "PYTHONPATH=/project/sawtooth-core/consensus/poet/common:\
+        /project/sawtooth-core/consensus/poet/simulator:\
+        /project/sawtooth-core/consensus/poet/core"
+    stop_signal: SIGKILL
+    networks:
+      - "prod-net"
+
+  rest-api-5:
+    image: hyperledger/sawtooth-rest-api:1.0
+    container_name: sawtooth-rest-api-default-5
+    expose:
+      - 4004
+      - 8008
+    ports:
+      - "8008:8008"
+    command: |
+      bash -c "
+        sawtooth-rest-api \
+          --connect tcp://validator-5:4004 \
+          --bind rest-api-5:8008
+      "
+    stop_signal: SIGKILL
+    networks:
+      - "prod-net"
+
+  sawtooth-tfa-sc-tp-go-kaztel-5:
+    image: $ALLATRACK_DOCKER_ID/sawtooth-tfa-sc-tp-go
+    container_name: sawtooth-tfa-sc-tp-go-kaztel-5
+    depends_on:
+      - validator-5
+    entrypoint: "tfa-service-client-tp-go --connect=tcp://validator-5:4004 --family=kaztel --version=0.1"
+    networks:
+      - "prod-net"
+
+  settings-tp-5:
+    image: hyperledger/sawtooth-settings-tp:1.0
+    container_name: sawtooth-settings-tp-default-5
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-5:4004
+    environment:
+      - "constraint:node==levabd-PC"
+    stop_signal: SIGKILL
+    networks:
+      - "prod-net"
+
+  poet-validator-registry-tp-5:
+    image: hyperledger/sawtooth-poet-validator-registry-tp:1.0
+    container_name: sawtooth-poet-validator-registry-tp-5
+    expose:
+      - 4004
+    command: poet-validator-registry-tp -C tcp://validator-5:4004
+    environment:
+      - "PYTHONPATH=/project/sawtooth-core/consensus/poet/common"
+    stop_signal: SIGKILL
+    networks:
+      - "prod-net"

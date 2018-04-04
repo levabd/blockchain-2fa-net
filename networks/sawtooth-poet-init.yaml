@@ -1,0 +1,205 @@
+version: "3.5"
+
+# Example of configuring net
+#
+# Before run this file you must create docker swarm cluster:
+#  $ docker swarm init --advertise-addr 192.0.2.1
+#
+# Connect master swarm node:
+#  $ docker swarm join --token SWMTKN-1-0ircxo13hmepyaqb1ekjnezb4qef5jywdyl59rptvnlq3506io-b8o69vrwo8l2elh04a8b1g292 --advertise-addr <IP подключаемой (slave) docker-ноды>:2377 <IP подключающей (master) docker-ноды>:2377
+#
+# Prod-net creation
+#  $ docker network create --driver=overlay --attachable prod-net
+#
+# Run on master docker node:
+#  $ docker run -dit --name alpine1 --network test-net alpine
+#
+# Run on slave docker node:
+#  $ docker run -dit --name alpine2 --network test-net alpine
+
+networks:
+  prod-net:
+    external: true
+
+services:
+  shell:
+    image: hyperledger/sawtooth-all:1.0
+    container_name: sawtooth-shell-default
+    entrypoint: "bash -c \"\
+        sawtooth keygen && \
+        tail -f /dev/null \
+        \""
+    networks:
+      - "prod-net"
+
+  validator-0:
+    image: hyperledger/sawtooth-validator:1.0
+    container_name: sawtooth-validator-default-0
+    volumes:
+      - ./poet-settings.sh:/etc/sawtooth/config/poet-settings.sh
+      - ./simulator_rk_pub.pem:/etc/sawtooth/config/simulator_rk_pub.pem
+    expose:
+      - 4004
+      - 8800
+    ports:
+      - "3000:8800"
+    command: "bash -c \"\
+        sawadm keygen --force && \
+        sawset genesis \
+          -k /etc/sawtooth/keys/validator.priv \
+          -o config-genesis.batch && \
+        sawset proposal create \
+          -k /etc/sawtooth/keys/validator.priv \
+          sawtooth.consensus.algorithm=poet \
+          sawtooth.poet.report_public_key_pem=\
+          \\\"$$(cat /etc/sawtooth/config/simulator_rk_pub.pem)\\\" \
+          sawtooth.poet.valid_enclave_measurements=$$(poet enclave measurement) \
+          sawtooth.poet.valid_enclave_basenames=$$(poet enclave basename) \
+          -o config.batch && \
+        poet registration create -k /etc/sawtooth/keys/validator.priv -o poet.batch && \
+        sawset proposal create \
+          -k /etc/sawtooth/keys/validator.priv \
+          $$(/etc/sawtooth/config/poet-settings.sh) \
+          -o poet-settings.batch && \
+        sawadm genesis \
+          config-genesis.batch config.batch poet.batch poet-settings.batch && \
+        sawtooth-validator -v \
+          --bind network:tcp://eth0:8800 \
+          --bind component:tcp://eth0:4004 \
+          --peering dynamic \
+          --endpoint tcp://sawtooth-validator-default-0.prod-net:8800 \
+          --scheduler serial \
+          --network trust
+    \""
+    environment:
+      PYTHONPATH: "/project/sawtooth-core/consensus/poet/common:\
+        /project/sawtooth-core/consensus/poet/simulator:\
+        /project/sawtooth-core/consensus/poet/core"
+    stop_signal: SIGKILL
+    networks:
+      - "prod-net"
+
+  validator-1:
+    image: hyperledger/sawtooth-validator:1.0
+    container_name: sawtooth-validator-default-1
+    expose:
+      - 4004
+      - 8800
+    environment:
+    command: |
+      bash -c "
+        sawadm keygen --force && \
+        sawtooth-validator -v \
+            --bind network:tcp://eth0:8800 \
+            --bind component:tcp://eth0:4004 \
+            --peering dynamic \
+            --endpoint tcp://sawtooth-validator-default-1.prod-net:8800 \
+            --seeds tcp://sawtooth-validator-default-0.prod-net:8800 \
+            --scheduler serial \
+            --network trust
+      "
+    environment:
+      PYTHONPATH: "/project/sawtooth-core/consensus/poet/common:\
+        /project/sawtooth-core/consensus/poet/simulator:\
+        /project/sawtooth-core/consensus/poet/core"
+    stop_signal: SIGKILL
+    networks:
+      - "prod-net"
+
+  rest-api-0:
+    image: hyperledger/sawtooth-rest-api:1.0
+    container_name: sawtooth-rest-api-default-0
+    expose:
+      - 4004
+      - 8008
+    ports:
+      - "8000:8008"
+    command: |
+      bash -c "
+        sawtooth-rest-api \
+          --connect tcp://sawtooth-validator-default-0.prod-net:4004 \
+          --bind rest-api-0:8008
+      "
+    stop_signal: SIGKILL
+    networks:
+      - "prod-net"
+
+  rest-api-1:
+    image: hyperledger/sawtooth-rest-api:1.0
+    container_name: sawtooth-rest-api-default-1
+    expose:
+      - 4004
+      - 8008
+    ports:
+      - "8001:8008"
+    command: |
+      bash -c "
+        sawtooth-rest-api \
+          --connect tcp://sawtooth-validator-default-1.prod-net:4004 \
+          --bind rest-api-1:8008
+      "
+    stop_signal: SIGKILL
+    networks:
+      - "prod-net"
+
+  sawtooth-tfa-sc-tp-go-kaztel-0:
+    image: $ALLATRACK_DOCKER_ID/sawtooth-tfa-sc-tp-go
+    container_name: sawtooth-tfa-sc-tp-go-kaztel-0
+    depends_on:
+      - validator-0
+    entrypoint: "tfa-service-client-tp-go --connect=tcp://sawtooth-validator-default-0.prod-net:4004 --family=kaztel --version=0.1"
+    networks:
+      - "prod-net"
+
+  sawtooth-tfa-sc-tp-go-kaztel-1:
+    image: $ALLATRACK_DOCKER_ID/sawtooth-tfa-sc-tp-go
+    container_name: sawtooth-tfa-sc-tp-go-kaztel-1
+    depends_on:
+      - validator-1
+    entrypoint: "tfa-service-client-tp-go --connect=tcp://sawtooth-validator-default-1.prod-net:4004 --family=kaztel --version=0.1"
+    networks:
+      - "prod-net"
+
+  settings-tp-0:
+    image: hyperledger/sawtooth-settings-tp:1.0
+    container_name: sawtooth-settings-tp-default-0
+    expose:
+      - 4004
+    command: settings-tp -C tcp://sawtooth-validator-default-0.prod-net:4004
+    stop_signal: SIGKILL
+    networks:
+      - "prod-net"
+
+  settings-tp-1:
+    image: hyperledger/sawtooth-settings-tp:1.0
+    container_name: sawtooth-settings-tp-default-1
+    expose:
+      - 4004
+    command: settings-tp -C tcp://sawtooth-validator-default-1.prod-net:4004
+    stop_signal: SIGKILL
+    networks:
+      - "rjyabuehfwbbprod-net"
+
+  poet-validator-registry-tp-0:
+    image: hyperledger/sawtooth-poet-validator-registry-tp:1.0
+    container_name: sawtooth-poet-validator-registry-tp-0
+    expose:
+      - 4004
+    command: poet-validator-registry-tp -C tcp://sawtooth-validator-default-0.prod-net:4004
+    environment:
+      PYTHONPATH: "/project/sawtooth-core/consensus/poet/common"
+    stop_signal: SIGKILL
+    networks:
+      - "prod-net"
+
+  poet-validator-registry-tp-1:
+    image: hyperledger/sawtooth-poet-validator-registry-tp:1.0
+    container_name: sawtooth-poet-validator-registry-tp-1
+    expose:
+      - 4004
+    command: poet-validator-registry-tp -C tcp://sawtooth-validator-default-1.prod-net:4004
+    environment:
+      PYTHONPATH: "/project/sawtooth-core/consensus/poet/common"
+    stop_signal: SIGKILL
+    networks:
+      - "prod-net"
