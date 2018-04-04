@@ -90,35 +90,35 @@ services:
     ports:
       - 6380:6379
 
-  sawtooth-tfa-sc-tp-go-kaztel:
-    image: $ALLATRACK_DOCKER_ID/sawtooth-tfa-sc-tp-go
-    container_name: sawtooth-tfa-sc-tp-go-kaztel
-    depends_on:
-      - validator
-      - rest-api
-    entrypoint: "tfa-service-client-tp-go --connect=tcp://validator:4004 --family=kaztel --version=0.1 --verbose"
-    networks:
-      - public
-
-  sawtooth-tfa-sc-tp-go-egov:
-    image: allatrack/sawtooth-tfa-sc-tp-go
-    container_name: sawtooth-tfa-sc-tp-g-egov
-    depends_on:
-      - validator
-      - rest-api
-    entrypoint: "tfa-service-client-tp-go --connect=tcp://validator:4004 --family=egov --version=0.1 --verbose"
-    networks:
-      - public
-
-  sawtooth-tfa-s-tp-go:
-    image: $ALLATRACK_DOCKER_ID/sawtooth-tfa-s-tp-go
-    container_name: sawtooth-tfa-s-tp-go
-    depends_on:
-      - validator
-      - rest-api
-    entrypoint: "tfa-service-tp-go --connect=tcp://validator:4004 --family=tfa --version=0.1 --verbose"
-    networks:
-      - public
+#  sawtooth-tfa-sc-tp-go-kaztel:
+#    image: $ALLATRACK_DOCKER_ID/sawtooth-tfa-sc-tp-go
+#    container_name: sawtooth-tfa-sc-tp-go-kaztel
+#    depends_on:
+#      - validator
+#      - rest-api
+#    entrypoint: "tfa-service-client-tp-go --connect=tcp://validator:4004 --family=kaztel --version=0.1 --verbose"
+#    networks:
+#      - public
+#
+#  sawtooth-tfa-sc-tp-go-egov:
+#    image: allatrack/sawtooth-tfa-sc-tp-go
+#    container_name: sawtooth-tfa-sc-tp-g-egov
+#    depends_on:
+#      - validator
+#      - rest-api
+#    entrypoint: "tfa-service-client-tp-go --connect=tcp://validator:4004 --family=egov --version=0.1 --verbose"
+#    networks:
+#      - public
+#
+#  sawtooth-tfa-s-tp-go:
+#    image: $ALLATRACK_DOCKER_ID/sawtooth-tfa-s-tp-go
+#    container_name: sawtooth-tfa-s-tp-go
+#    depends_on:
+#      - validator
+#      - rest-api
+#    entrypoint: "tfa-service-tp-go --connect=tcp://validator:4004 --family=tfa --version=0.1 --verbose"
+#    networks:
+#      - public
 
 #  tfa-entrance-api:
 #    container_name: tfa-entrance-api

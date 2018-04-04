@@ -18,53 +18,15 @@
 package handler
 
 import (
-	"crypto/sha512"
-	"encoding/hex"
 	"fmt"
-	cbor "github.com/brianolson/cbor_go"
 	"sawtooth_sdk/logging"
 	"sawtooth_sdk/processor"
 	"sawtooth_sdk/protobuf/processor_pb2"
-	"strings"
-	"regexp"
+	"github.com/golang/protobuf/proto"
 	"encoding/json"
-	"sort"
-	crc16 "github.com/joaojeronimo/go-crc16"
-	"bytes"
-	"strconv"
 )
 
 var logger *logging.Logger = logging.Get()
-
-type Log struct {
-	Event      string  `json:"Event" bson:"Event" binding:"required"`
-	Status     string  `json:"Status" bson:"Status" binding:"required"`
-	Code       uint16  `json:"Code" bson:"Code" binding:"required"`
-	ExpiredAt  float64 `json:"ExpiredAt" bson:"ExpiredAt" binding:"required"`
-	Embeded    bool    `json:"Embeded" bson:",omitempty"`
-	ActionTime float64 `json:"ActionTime" bson:"ActionTime" binding:"required"`
-	Method     string  `json:"Method" bson:"Method" binding:"required"`
-	Cert       string  `json:"Cert" bson:"Cert" bson:",omitempty"`
-}
-
-type User struct {
-	PhoneNumber    string         `json:"PhoneNumber" bson:"PhoneNumber" binding:"required"`
-	Uin            uint64         `json:"Uin" bson:"Uin" binding:"required"`
-	Name           string         `json:"Name" bson:"Name" binding:"required"`
-	IsVerified     bool           `json:",omitempty"`
-	Email          string         `json:"Email" bson:"Email" binding:"required"`
-	Sex            string         `json:"Sex" bson:"Sex" binding:"required"`
-	Birthdate      float64        `json:"Birthdate" bson:"Birthdate" binding:"required"`
-	AdditionalData string         `json:",omitempty"`
-	Logs           map[string]Log `json:",omitempty"`
-}
-
-type SCPayload struct {
-	Action      string
-	PhoneNumber string
-	User        User
-	Log         Log `json:",omitempty"`
-}
 
 type SCHandler struct {
 	namespace      string
@@ -78,17 +40,11 @@ func NewHandler(namespace string) *SCHandler {
 	}
 }
 
-var RE = regexp.MustCompile(`^\+?[1-9]\d{1,14}$`)
-
-const (
-	RESEND_CODE = "RESEND_CODE"
-	SEND_CODE   = "SEND_CODE"
-	EXPIRED     = "EXPIRED"
-	VALID       = "VALID"
-	INVALID     = "INVALID"
-)
-
 var family_name, family_version string
+
+func GetFamilyName() string {
+	return family_name
+}
 
 func (self *SCHandler) SetFamilyName(name string) {
 	self.family_name = name
@@ -111,278 +67,49 @@ func (self *SCHandler) Namespaces() []string {
 }
 
 func (self *SCHandler) Apply(request *processor_pb2.TpProcessRequest, context *processor.Context) error {
-	payloadData := request.GetPayload()
-	if payloadData == nil {
-		return &processor.InvalidTransactionError{Msg: "Must contain payload"}
-	}
-	var payload SCPayload
-	err := DecodeCBOR(payloadData, &payload)
+
+	payload, err := unpackPayload(request.GetPayload())
 	if err != nil {
-		return &processor.InvalidTransactionError{
-			Msg: fmt.Sprint("Failed to decode payload: ", err),
-		}
+		return err
 	}
 
-	if err != nil {
-		logger.Error("Bad payload: ", payloadData)
-		return &processor.InternalError{Msg: fmt.Sprint("Failed to decode payload: ", err)}
+	logger.Debugf("service client tp txn %v: action %v",
+		request.Signature, payload.GetAction())
+
+	errors := GetPayloadErrors(payload)
+	if len(errors) != 0 {
+		errorsMarshaled, _ := json.Marshal(errors)
+		return &processor.InvalidTransactionError{Msg: string(errorsMarshaled)}
 	}
 
-	action := payload.Action
-	phoneNumber := payload.PhoneNumber
-
-	if action == "" {
-		return &processor.InvalidTransactionError{Msg: fmt.Sprintf("Action is required")}
-	}
-
-	if phoneNumber == "" {
-		return &processor.InvalidTransactionError{
-			Msg: fmt.Sprintf("PhoneNumber is required"),
-		}
-	}
-
-	if ! RE.MatchString(phoneNumber) {
-		return &processor.InvalidTransactionError{
-			Msg: fmt.Sprintf("PhoneNumber %v has invalid format", phoneNumber),
-		}
-	}
-
-	if !(action == "create" || action == "update" || action == "delete" || action == "addLog" || action == "verify" || action == "setPushToken") {
-		return &processor.InvalidTransactionError{Msg: fmt.Sprintf("Invalid action: %v", action)}
-	}
-
-	hashedPhoneNumber := Hexdigest(phoneNumber)
+	hashedPhoneNumber := Hexdigest(payload.GetPhoneNumber())
 	address := self.namespace + hashedPhoneNumber[len(hashedPhoneNumber)-64:]
 
-	results, err := context.GetState([]string{address})
-	if err != nil {
-		return err
-	}
-
-	var user = User{}
-	switch action {
-	case "create":
-		errors := GetUserValidationErrors(payload.User)
-		if len(errors) != 0 {
-			errorsMarshaled, _ := json.Marshal(errors)
-			return &processor.InvalidTransactionError{Msg: string(errorsMarshaled)}
-		}
-		user = payload.User
-		break
-	case "update":
-		errors := GetUserValidationErrors(payload.User)
-		if len(errors) != 0 {
-			errorsMarshaled, _ := json.Marshal(errors)
-			return &processor.InvalidTransactionError{Msg: string(errorsMarshaled)}
-		}
-
-		data, exists := results[address]
-		if exists && len(data) > 0 {
-			fmt.Print("Data: ", data)
-			err = DecodeCBOR(data, &user)
-			if err != nil {
-				return &processor.InternalError{
-					Msg: fmt.Sprint("Failed to decode data: ", err),
-				}
-			}
-		} else {
-			user = User{}
-		}
-
-		user = self.UpdateUser(user, payload.User)
-		break
-	case "addLog":
-		if payload.Log == (Log{}) {
-			return &processor.InternalError{
-				Msg: fmt.Sprint("Payload does not contain Log model"),
-			}
-		}
-		errors := GetLogValidationErrors(payload.Log)
-		if len(errors) != 0 {
-			errorsMarshaled, _ := json.Marshal(errors)
-			return &processor.InvalidTransactionError{Msg: string(errorsMarshaled)}
-		}
-
-		user, err = self.AddLogToUser(user, payload.Log, phoneNumber)
-		if err!=nil{
-			return &processor.InvalidTransactionError{Msg: err.Error()}
-		}
-		break
-	case "varify":
-		if payload.Log == (Log{}) {
-			return &processor.InternalError{
-				Msg: fmt.Sprint("Payload does not contain Log model"),
-			}
-		}
-		errors := GetLogValidationErrors(payload.Log)
-		if len(errors) != 0 {
-			errorsMarshaled, _ := json.Marshal(errors)
-			return &processor.InvalidTransactionError{Msg: string(errorsMarshaled)}
-		}
-		user, err = self.Verify(user, payload.Log, phoneNumber)
-		if err!=nil{
-			return &processor.InvalidTransactionError{Msg: err.Error()}
-		}
-		break
+	switch payload.GetAction() {
+	case PayloadType_USER_CREATE:
+		return ApplyCreateUser(address, payload.GetPayloadUser(), context)
+	case PayloadType_USER_UPDATE:
+		return ApplyUpdateUser(address, payload.GetPayloadUser(), context)
+	case PayloadType_CODE_GENERATE:
+		return ApplyCodeGeneration(address, payload.GetPayloadLog(), context, payload.GetPhoneNumber())
+	case PayloadType_CODE_VERIFY:
+		return ApplyVerification(address, payload.GetPayloadLog(), context, payload.GetPhoneNumber())
 	default:
 		return &processor.InternalError{
-			Msg: fmt.Sprintf("Verb must be register, update, setPushToken ot isVerified: not  %s", action),
+			Msg: fmt.Sprintf("Verb must be register, update, "+
+				"setPushToken ot isVerified: not  %s", payload.GetAction()),
 		}
-	}
-
-	data, err := EncodeCBOR(user)
-	if err != nil {
-		return &processor.InternalError{
-			Msg: fmt.Sprint("Failed to encode new map:", err),
-		}
-	}
-
-	addresses, err := context.SetState(map[string][]byte{
-		address: data,
-	})
-	if err != nil {
-		return err
-	}
-	if len(addresses) == 0 {
-		return &processor.InternalError{Msg: "No addresses in set response"}
 	}
 
 	return nil
 }
 
-func (self *SCHandler) UpdateUser(userOld, userUpdateData User) User {
-	userOld.Name = userUpdateData.Name
-	userOld.PhoneNumber = userUpdateData.PhoneNumber
-	userOld.Email = userUpdateData.Email
-	userOld.Sex = userUpdateData.Sex
-	userOld.Birthdate = userUpdateData.Birthdate
-	userOld.AdditionalData = userUpdateData.AdditionalData
-	return userOld
-}
-
-func (self *SCHandler) Verify(user User, log Log, phoneNumber string) (User, error) {
-	keys := make([]int, 0, len(user.Logs))
-	mapLogsSend := make(map[string]Log)
-	for k, item := range user.Logs {
-		s, e := strconv.Atoi(k)
-		if e != nil {
-			return User{}, &processor.InternalError{Msg: "Logs key is invalid"}
-		}
-		keys = append(keys, s)
-		if item.Status == SEND_CODE || item.Status == RESEND_CODE {
-			mapLogsSend[k] = item
-		}
-	}
-	sort.Ints(keys)
-	lastLogIndex := keys[len(keys)-1]
-
-	keys = make([]int, 0, len(mapLogsSend))
-	for k := range mapLogsSend {
-		s, e := strconv.Atoi(k)
-		if e != nil {
-			return User{}, &processor.InternalError{Msg: "Logs key is invalid"}
-		}
-		keys = append(keys, s)
-	}
-	sort.Ints(keys)
-	lastLogWithSendStatusIndex := keys[len(keys)-1]
-	t := strconv.Itoa(lastLogWithSendStatusIndex)
-	latestLogWithSendCode := mapLogsSend[t]
-
-	var buffer bytes.Buffer
-	buffer.WriteString(self.FamilyName())
-	buffer.WriteString(log.Event)
-	buffer.WriteString(phoneNumber)
-	buffer.WriteString(strconv.Itoa(int(log.ActionTime)))
-	log.Code = crc16.Crc16([]byte(buffer.String()))
-
-	if latestLogWithSendCode.ExpiredAt <= log.ActionTime {
-		log.Status = EXPIRED
-	} else if latestLogWithSendCode.Code == self.getCode(log.Event, phoneNumber, log.ActionTime) {
-		log.Status = VALID;
-	} else {
-		log.Status = INVALID;
-	}
-
-	t = strconv.Itoa(lastLogIndex)
-	user.Logs[t] = log
-
-	return user, nil
-}
-
-func (self *SCHandler) AddLogToUser(user User, log Log, phoneNumber string) (User, error) {
-	logIndex := 0
-	if len(user.Logs) == 0 {
-		user.Logs = make(map[string]Log)
-	} else {
-		keys := make([]int, 0, len(user.Logs))
-		for k := range user.Logs {
-			s, e := strconv.Atoi(k)
-			if e != nil {
-				return User{}, &processor.InternalError{Msg: "Logs key is invalid"}
-			}
-			keys = append(keys, s)
-		}
-		sort.Ints(keys)
-		logIndex = keys[len(keys)-1]
-	}
-
-	var status = SEND_CODE
-	if log.Status == RESEND_CODE {
-		status = RESEND_CODE
-	}
-
-	log.Status = status
-
-	log.Code = self.getCode(log.Event, phoneNumber, log.ActionTime)
-
-	if logIndex == 0 {
-		user.Logs["0"] = log;
-	} else {
-		t := strconv.Itoa(logIndex + 1)
-		user.Logs[t] = log;
-	}
-	logger.Info("code: %v", log.Code)
-	return user, nil
-}
-
-func FloatToString(input_num float64) string {
-	// to convert a float number to a string
-	return strconv.FormatFloat(input_num, 'f', 6, 64)
-}
-
-func (self *SCHandler) getCode(event, phoneNumber string, actionTime float64) uint16 {
-	var buffer bytes.Buffer
-	buffer.WriteString(self.FamilyName())
-	buffer.WriteString(event)
-	buffer.WriteString(phoneNumber)
-	buffer.WriteString(FloatToString(actionTime))
-
-	return crc16.Crc16([]byte(buffer.String()))
-}
-
-func EncodeCBOR(value interface{}) ([]byte, error) {
-	data, err := cbor.Dumps(value)
-	return data, err
-}
-
-func DecodeCBOR(data []byte, pointer interface{}) error {
-	defer func() error {
-		if recover() != nil {
-			return &processor.InvalidTransactionError{Msg: "Failed to decode payload"}
-		}
-		return nil
-	}()
-	err := cbor.Loads(data, pointer)
+func unpackPayload(payloadData []byte) (*SCPayload, error) {
+	payload := &SCPayload{}
+	err := proto.Unmarshal(payloadData, payload)
 	if err != nil {
-		return err
+		return nil, &processor.InternalError{
+			Msg: fmt.Sprint("Failed to unmarshal 2FA Service Client: %v", err)}
 	}
-	return nil
-}
-
-func Hexdigest(str string) string {
-	hash := sha512.New()
-	hash.Write([]byte(str))
-	hashBytes := hash.Sum(nil)
-	return strings.ToLower(hex.EncodeToString(hashBytes))
+	return payload, nil
 }

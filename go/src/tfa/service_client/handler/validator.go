@@ -3,16 +3,20 @@ package handler
 import (
 	"regexp"
 	"encoding/json"
+	"fmt"
 )
 
-var RE_EMAIL = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_" + "{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+var (
+	RE       = regexp.MustCompile(`^\+?[1-9]\d{1,14}$`)
+	RE_EMAIL = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_" + "{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+)
 
 func isJSONString(s string) bool {
 	var js string
 	return json.Unmarshal([]byte(s), &js) == nil
 }
 
-func GetUserValidationErrors(user User) []string {
+func GetUserValidationErrors(user *User) []string {
 	var errors = []string{}
 
 	if user.Name == "" {
@@ -50,7 +54,7 @@ func GetUserValidationErrors(user User) []string {
 	return errors;
 }
 
-func GetLogValidationErrors(log Log) []string {
+func GetLogValidationErrors(log *Log) []string {
 	var errors = []string{}
 
 	if log.Event == "" {
@@ -71,6 +75,22 @@ func GetLogValidationErrors(log Log) []string {
 
 	if log.Embeded && log.Cert == "" {
 		errors = append(errors, "Cert is required then Embeded true")
+	}
+
+	return errors;
+}
+
+func GetPayloadErrors(payload *SCPayload) []string {
+	var errors = []string{}
+
+	phoneNumber := payload.GetPhoneNumber()
+
+	if phoneNumber == "" {
+		errors = append(errors, "PhoneNumber is required")
+	}
+
+	if ! RE.MatchString(phoneNumber) {
+		errors = append(errors, fmt.Sprintf("PhoneNumber %v has invalid format", phoneNumber))
 	}
 
 	return errors;

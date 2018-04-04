@@ -12,11 +12,17 @@ const FAMILY_NAMESPACE = _hash(FAMILY_NAME).substring(0, 6)
 const FAMILY_VERSION = '0.1';
 const PORT = '8008';
 const {createHash} = require('crypto')
-const {protobuf} = require('sawtooth-sdk')
+const {protobuf } = require( 'sawtooth-sdk')
 const faker = require('faker')
 faker.locale = "ru";
 const request = require('request')
+const fs = require('fs')
 const WebSocket = require('ws')
+
+var protobufLib = require('protocol-buffers')
+
+// pass a proto file as a buffer/string or pass a parsed protobuf-schema object
+var messages = protobufLib(fs.readFileSync('go/src/tfa/service_client/service_client.proto'))
 
 const RECORd_NUMBER = 100
 let c = 0
@@ -131,9 +137,9 @@ for (let i = 0; i <= RECORd_NUMBER; i++) {
         var uin = getRandomInt(99999999999, 999999999999)
 
         const payload = {
-            Action: 'create', // create | update | delete
+            Action: 0, // create | update | delete
             PhoneNumber: pn,
-            User: {
+            PayloadUser: {
                 PhoneNumber: pn,
                 Uin: uin,
                 Name: faker.name.findName(),
@@ -150,7 +156,9 @@ for (let i = 0; i <= RECORd_NUMBER; i++) {
 
         console.log('address', address);
 
-        const payloadBytes = cbor.encode(payload)
+        const payloadBytes = messages.SCPayload.encode(payload)
+
+        // const payloadBytes = cbor.encode(payload)
 
         const transactionHeaderBytes = protobuf.TransactionHeader.encode({
             familyName: FAMILY_NAME,
