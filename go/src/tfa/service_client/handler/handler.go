@@ -67,7 +67,6 @@ func (self *SCHandler) Namespaces() []string {
 }
 
 func (self *SCHandler) Apply(request *processor_pb2.TpProcessRequest, context *processor.Context) error {
-
 	payload, err := unpackPayload(request.GetPayload())
 	if err != nil {
 		return err

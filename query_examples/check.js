@@ -21,11 +21,11 @@ var messages = protobufLib(fs.readFileSync('go/src/tfa/service_client/service_cl
 console.log('length');
 
 request.get({
-    url: 'http://127.0.0.1:8008/state/cd242e0238a9ab0400c59dcc10e5f314acfd1640f058c82514ec49aa8e6f151cd803c6',
+    url: 'http://127.0.0.1:8008/state/cd242e09ca183fc3f661681f533667712dee333aa01626c58d49dd067d270e00ba4925',
     headers: {'Content-Type': 'application/octet-stream'}
 }, (err, response) => {
     if (err) return console.log(err)
-console.log('response.body', response.body);
+    console.log('response.body', response.body);
     var dataBase64 = JSON.parse(response.body).data
     console.log('length',messages.User.decode(new Buffer(dataBase64, 'base64')));
 });

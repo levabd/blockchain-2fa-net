@@ -24,7 +24,7 @@ var protobufLib = require('protocol-buffers')
 // pass a proto file as a buffer/string or pass a parsed protobuf-schema object
 var messages = protobufLib(fs.readFileSync('go/src/tfa/service_client/service_client.proto'))
 
-const RECORd_NUMBER = 100
+const RECORd_NUMBER = 31
 let c = 0
 let e = 0
 const makeRequest = (data) => {
@@ -154,9 +154,10 @@ for (let i = 0; i <= RECORd_NUMBER; i++) {
         // let address = FAMILY_NAMESPACE + _hash(payload.User.Uin +payload.User.PhoneNumber).slice(-64)
         let address = FAMILY_NAMESPACE + phoneNumberPart
 
-        console.log('address', address);
+        // console.log('address', address);
 
         const payloadBytes = messages.SCPayload.encode(payload)
+        console.log('payloadBytes.length.', payloadBytes.length);
 
         // const payloadBytes = cbor.encode(payload)
 
