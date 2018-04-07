@@ -4,9 +4,6 @@ import (
 	"sawtooth_sdk/processor"
 	"github.com/golang/protobuf/proto"
 	"fmt"
-	"strconv"
-	"bytes"
-	crc16 "github.com/joaojeronimo/go-crc16"
 	"crypto/sha512"
 	"strings"
 	"encoding/hex"
@@ -31,28 +28,6 @@ func Hexdigest(str string) string {
 	return strings.ToLower(hex.EncodeToString(hashBytes))
 }
 
-func floatToString(input_num float64) string {
-	// to convert a float number to a string
-	return strconv.FormatFloat(input_num, 'f', 6, 64)
-}
-
-func addLogToUser(user *User, log *Log, phoneNumber, familyName string) {
-	var status = SEND_CODE
-	if log.Status == RESEND_CODE {
-		status = RESEND_CODE
-	}
-
-	log.Status = status
-
-	var buffer bytes.Buffer
-	buffer.WriteString(familyName)
-	buffer.WriteString(log.Event)
-	buffer.WriteString(phoneNumber)
-	buffer.WriteString(floatToString(log.ActionTime))
-
-	log.Code =  uint32(crc16.Crc16([]byte(buffer.String())))
-	user.Logs = append(user.Logs, log)
-}
 
 func getUserByAddress(address string, context *processor.Context) (*User, error) {
 	results, err := context.GetState([]string{address})
@@ -67,28 +42,6 @@ func getUserByAddress(address string, context *processor.Context) (*User, error)
 		}
 	}
 	return &user, nil
-}
-
-func verify(user *User, log *Log, phoneNumber string) (error) {
-
-	mapLogsSend := make([]Log, 0)
-	for _, item := range user.GetLogs() {
-		if item.Status == SEND_CODE || item.Status == RESEND_CODE {
-			mapLogsSend = append(mapLogsSend, *item)
-		}
-	}
-
-	latestLogWithSendCode := mapLogsSend[len(mapLogsSend)-1]
-
-	if latestLogWithSendCode.ExpiredAt <= log.ActionTime {
-		log.Status = EXPIRED
-	} else if latestLogWithSendCode.GetCode() == log.Code {
-		log.Status = VALID;
-	} else {
-		log.Status = INVALID;
-	}
-	user.Logs = append(user.Logs, log)
-	return nil
 }
 
 func saveUser(address string, user *User, context *processor.Context) error {

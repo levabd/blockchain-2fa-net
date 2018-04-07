@@ -65,7 +65,11 @@ func ApplyUpdateUser(address string, userUpdateData *User, context *processor.Co
 	return nil
 }
 
-func ApplyCodeGeneration(address string, log *Log, context *processor.Context, phoneNumber string) error {
+func ApplyCodeGeneration(
+	log *Log,
+	context *processor.Context,
+	address, phoneNumber, familyName string) error {
+
 	if log == (&Log{}) {
 		return &processor.InternalError{
 			Msg: fmt.Sprint("Payload does not contain Log model"),
@@ -83,11 +87,7 @@ func ApplyCodeGeneration(address string, log *Log, context *processor.Context, p
 		return &processor.InvalidTransactionError{Msg: err.Error()}
 	}
 
-	err = addLogToUser(user, log, phoneNumber)
-	if err != nil {
-		return &processor.InvalidTransactionError{Msg: err.Error()}
-	}
-
+	addLogToUser(user, log, phoneNumber, familyName)
 	err = saveUser(address, user, context)
 	if err != nil {
 		return &processor.InvalidTransactionError{Msg: err.Error()}

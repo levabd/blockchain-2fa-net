@@ -23,8 +23,9 @@ var protobufLib = require('protocol-buffers')
 
 // pass a proto file as a buffer/string or pass a parsed protobuf-schema object
 var messages = protobufLib(fs.readFileSync('go/src/tfa/service_client/service_client.proto'))
+// var messages = protobufLib(fs.readFileSync('go/src/tfa/service/service.proto'))
 
-const RECORd_NUMBER = 31
+const RECORd_NUMBER = 100
 let c = 0
 let e = 0
 const makeRequest = (data) => {

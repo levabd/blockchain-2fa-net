@@ -40,10 +40,8 @@ func NewHandler(namespace string) *SCHandler {
 	}
 }
 
-var family_name, family_version string
-
-func GetFamilyName() string {
-	return family_name
+func (self *SCHandler) GetFamilyName() string {
+	return self.family_name
 }
 
 func (self *SCHandler) SetFamilyName(name string) {
@@ -90,7 +88,12 @@ func (self *SCHandler) Apply(request *processor_pb2.TpProcessRequest, context *p
 	case PayloadType_USER_UPDATE:
 		return ApplyUpdateUser(address, payload.GetPayloadUser(), context)
 	case PayloadType_CODE_GENERATE:
-		return ApplyCodeGeneration(address, payload.GetPayloadLog(), context, payload.GetPhoneNumber())
+		return ApplyCodeGeneration(
+			payload.GetPayloadLog(),
+			context,
+			address,
+			payload.GetPhoneNumber(),
+			self.GetFamilyName())
 	case PayloadType_CODE_VERIFY:
 		return ApplyVerification(address, payload.GetPayloadLog(), context, payload.GetPhoneNumber())
 	default:

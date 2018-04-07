@@ -12,7 +12,7 @@ func isJSONString(s string) bool {
 	return json.Unmarshal([]byte(s), &js) == nil
 }
 
-func GetUserValidationErrors(user User) []string {
+func GetUserValidationErrors(user *User) []string {
 	var errors = []string{}
 
 	if user.Name == "" {

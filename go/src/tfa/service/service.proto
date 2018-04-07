@@ -16,26 +16,8 @@
 syntax = "proto3";
 option go_package = "handler";
 
-
-message Log {
-    string Event = 1;
-
-    string Status = 2;
-
-    uint32 Code = 3;
-
-    double ExpiredAt = 4;
-
-    bool Embeded = 5;
-
-    double ActionTime = 6;
-
-    string Method = 7;
-
-    string Cert = 8;
-}
-
 message User {
+
     string PhoneNumber = 1;
 
     uint32 Uin = 2;
@@ -50,21 +32,15 @@ message User {
 
     double Birthdate = 7;
 
-    string AdditionalData = 8;
-
-    repeated Log Logs = 9;
+    string PushToken = 8;
 }
 enum PayloadType {
     USER_CREATE = 0;
     USER_UPDATE = 1;
-    CODE_GENERATE = 2;
-    CODE_VERIFY = 3;
 }
 
 message SCPayload {
-
     PayloadType Action = 1;
     string PhoneNumber = 2;
     User PayloadUser = 3;
-    Log PayloadLog = 4;
 }
