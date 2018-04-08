@@ -36,6 +36,7 @@ message Log {
 }
 
 message User {
+
     string PhoneNumber = 1;
 
     uint32 Uin = 2;
@@ -48,12 +49,13 @@ message User {
 
     string Sex = 6;
 
-    double Birthdate = 7;
+    double Birthdate =  7;
 
     string AdditionalData = 8;
 
     repeated Log Logs = 9;
 }
+
 enum PayloadType {
     USER_CREATE = 0;
     USER_UPDATE = 1;

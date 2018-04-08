@@ -82,7 +82,7 @@ func (self *SCHandler) Apply(request *processor_pb2.TpProcessRequest, context *p
 	hashedPhoneNumber := Hexdigest(payload.GetPhoneNumber())
 	address := self.namespace + hashedPhoneNumber[len(hashedPhoneNumber)-64:]
 
-	switch payload.GetAction() {
+	switch payload.Action {
 	case PayloadType_USER_CREATE:
 		return ApplyCreateUser(address, payload.GetPayloadUser(), context)
 	case PayloadType_USER_UPDATE:
@@ -97,7 +97,7 @@ func (self *SCHandler) Apply(request *processor_pb2.TpProcessRequest, context *p
 	case PayloadType_CODE_VERIFY:
 		return ApplyVerification(address, payload.GetPayloadLog(), context, payload.GetPhoneNumber())
 	default:
-		return &processor.InternalError{
+		return &processor.InvalidTransactionError{
 			Msg: fmt.Sprintf("Verb must be register, update, "+
 				"setPushToken ot isVerified: not  %s", payload.GetAction()),
 		}

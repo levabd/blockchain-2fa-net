@@ -7,7 +7,7 @@ const crypto = require('crypto')
 
 const _hash = (x) => crypto.createHash('sha512').update(x).digest('hex').toLowerCase()
 const cbor = require('cbor')
-const FAMILY_NAME = 'kaztel';
+const FAMILY_NAME = 'tfa';
 const FAMILY_NAMESPACE = _hash(FAMILY_NAME).substring(0, 6)
 const FAMILY_VERSION = '0.1';
 const PORT = '8008';
@@ -22,10 +22,10 @@ const WebSocket = require('ws')
 var protobufLib = require('protocol-buffers')
 
 // pass a proto file as a buffer/string or pass a parsed protobuf-schema object
-var messages = protobufLib(fs.readFileSync('go/src/tfa/service_client/service_client.proto'))
-// var messages = protobufLib(fs.readFileSync('go/src/tfa/service/service.proto'))
+// var messages = protobufLib(fs.readFileSync('go/src/tfa/service_client/service_client.proto'))
+var messages = protobufLib(fs.readFileSync('go/src/tfa/service/service.proto'))
 
-const RECORd_NUMBER = 100
+const RECORd_NUMBER = 1
 let c = 0
 let e = 0
 const makeRequest = (data) => {
@@ -135,6 +135,7 @@ for (let i = 0; i <= RECORd_NUMBER; i++) {
     (function (cntr) {
 
         var pn = '7705' + getRandomInt(999999, 9999999)
+        // var pn =  '77053018477'
         var uin = getRandomInt(99999999999, 999999999999)
 
         const payload = {

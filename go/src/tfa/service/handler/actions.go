@@ -45,6 +45,8 @@ func ApplyUpdate(address string, userUpdateData *User, context *processor.Contex
 	userOld.PhoneNumber = userUpdateData.PhoneNumber
 	userOld.Email = userUpdateData.Email
 	userOld.Sex = userUpdateData.Sex
+	userOld.IsVerified = userUpdateData.IsVerified
+	userOld.PushToken = userUpdateData.PushToken
 	userOld.Birthdate = userUpdateData.Birthdate
 
 	err = saveUser(address, userOld, context)

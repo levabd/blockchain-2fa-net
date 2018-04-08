@@ -23,7 +23,7 @@ var messages = protobufLib(fs.readFileSync('go/src/tfa/service_client/service_cl
 console.log('length');
 
 request.get({
-    url: 'http://127.0.0.1:8008/state/cd242e56142e65a3c7a624c9612a244f82bf2c3982526ea45a083f001cf08fbcf2bc68',
+    url: 'http://127.0.0.1:8008/state/cd242e3883c30e890987338a2cf080f01a011727c83c1f7a026136285b2311bae00e6f',
     headers: {'Content-Type': 'application/octet-stream'}
 }, (err, response) => {
     if (err) return console.log(err)
