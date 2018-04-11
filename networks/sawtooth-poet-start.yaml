@@ -45,6 +45,8 @@ services:
     ports:
       - "3000:8800"
     command: "bash -c \"\
+        sawadm keygen && \
+        sawtooth keygen my_key && \
         sawtooth-validator -v \
           --bind network:tcp://eth0:8800 \
           --bind component:tcp://eth0:4004 \

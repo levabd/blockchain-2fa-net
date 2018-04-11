@@ -70,7 +70,6 @@ func getUserByAddress(address string, context *processor.Context) (*User, error)
 }
 
 func verify(user *User, log *Log, phoneNumber string) (error) {
-
 	mapLogsSend := make([]Log, 0)
 	for _, item := range user.GetLogs() {
 		if item.Status == SEND_CODE || item.Status == RESEND_CODE {
