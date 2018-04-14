@@ -7,8 +7,8 @@ const crypto = require('crypto')
 
 const _hash = (x) => crypto.createHash('sha512').update(x).digest('hex').toLowerCase()
 const cbor = require('cbor')
-// const FAMILY_NAME = 'tfa';
-const FAMILY_NAME = 'kaztel';
+const FAMILY_NAME = 'tfa';
+// const FAMILY_NAME = 'kaztel';
 const FAMILY_NAMESPACE = _hash(FAMILY_NAME).substring(0, 6)
 const FAMILY_VERSION = '0.1';
 const PORT = '8008';
@@ -94,7 +94,6 @@ const handle = function (transactions, i) {
     })
 }
 
-
 let ws = new WebSocket(`ws:127.0.0.1:${PORT}/subscriptions`)
 ws.onopen = () => {
     ws.send(JSON.stringify({
@@ -135,11 +134,10 @@ var tlist = []
 for (let i = 0; i <= RECORd_NUMBER; i++) {
     (function (cntr) {
 
-        // var pn = '7705' + getRandomInt(999999, 9999999)
+         //var pn = '7705' + getRandomInt(999999, 9999999)
         var pn =  '77053237001'
         // var pn =  '77059127941'
         var uin = getRandomInt(99999999999, 999999999999)
-
         const payload = {
             Action: 0, // create | update | delete
             PhoneNumber: pn,
@@ -191,13 +189,13 @@ for (let i = 0; i <= RECORd_NUMBER; i++) {
             headerSignature: signature0,
             payload: payloadBytes
         })
-        handle([transaction], cntr)
+       handle([transaction], cntr)
 
-        // if (tlist.length === 30) {
-        //     handle(tlist, cntr)
-        //     tlist = []
-        // } else {
-        //     tlist.push(transaction)
-        // }
+         // if (tlist.length === 30) {
+         //     handle(tlist, cntr)
+         //     tlist = []
+         // } else {
+         //     tlist.push(transaction)
+         // }
     })(i);
 }

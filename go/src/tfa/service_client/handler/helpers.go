@@ -50,7 +50,7 @@ func addLogToUser(user *User, log *Log, phoneNumber, familyName string) {
 	buffer.WriteString(phoneNumber)
 	buffer.WriteString(floatToString(log.ActionTime))
 
-	log.Code =  uint32(crc16.Crc16([]byte(buffer.String())))
+	log.Code = uint32(crc16.Crc16([]byte(buffer.String())))
 	user.Logs = append(user.Logs, log)
 }
 
@@ -76,9 +76,12 @@ func verify(user *User, log *Log, phoneNumber string) (error) {
 			mapLogsSend = append(mapLogsSend, *item)
 		}
 	}
-
+	logger.Info(log.Status)
+	if log.Status == REJECT {
+		user.Logs = append(user.Logs, log)
+		return nil
+	}
 	latestLogWithSendCode := mapLogsSend[len(mapLogsSend)-1]
-
 	if latestLogWithSendCode.ExpiredAt <= log.ActionTime {
 		log.Status = EXPIRED
 	} else if latestLogWithSendCode.GetCode() == log.Code {

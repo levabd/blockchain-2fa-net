@@ -12,6 +12,7 @@ const (
 	EXPIRED     = "EXPIRED"
 	VALID       = "VALID"
 	INVALID     = "INVALID"
+	REJECT      = "REJECT"
 )
 
 func ApplyCreateUser(address string, user *User, context *processor.Context) error {

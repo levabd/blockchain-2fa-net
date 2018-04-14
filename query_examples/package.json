@@ -15,6 +15,7 @@
     "cbor": "^3.0.0",
     "crypto": "^1.0.1",
     "faker": "^4.1.0",
+    "node-phonenumber": "^1.0.0",
     "protobufjs": "^6.8.6",
     "protocol-buffers": "^4.0.4",
     "request": "^2.83.0",

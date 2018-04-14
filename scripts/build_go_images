@@ -5,8 +5,8 @@ echo 'build allatrack/sawtooth-tfa-sc-tp-go image'
 top_dir=$(cd $(dirname $(dirname $0)) && pwd)
 cd $top_dir/go/bin
 docker build -f sawtooth-tfa-service-client-tp-go \
-             -t allatrack/sawtooth-tfa-sc-tp-go              .
+             -t $ALLATRACK_DOCKER_ID/sawtooth-tfa-sc-tp-go              .
 
 echo 'build allatrack/sawtooth-tfa-s-tp-go image'
 docker build -f sawtooth-tfa-service-tp-go \
-             -t allatrack/sawtooth-tfa-s-tp-go              .
+             -t $ALLATRACK_DOCKER_ID/sawtooth-tfa-s-tp-go              .
