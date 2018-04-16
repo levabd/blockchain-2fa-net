@@ -120,6 +120,20 @@ services:
     networks:
       - public
 
+#  my-web-page:
+#    build: ./path/to/web/dir/
+#    image: my-web-page
+#    container_name: my-web-page
+#    volumes:
+#      - ./path/to/web/dir/public/:/usr/local/apache2/htdocs/
+#    expose:
+#      - 80
+#    ports:
+#      - '8000:80'
+#    depends_on:
+#      - rest-api
+
+
 #  tfa-entrance-api:
 #    container_name: tfa-entrance-api
 #    image: $ALLATRACK_DOCKER_ID/tfa-entrance-backend
