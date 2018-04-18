@@ -34,40 +34,32 @@ services:
     expose:
       - 4004
     ports:
-      - "4004:4004"
-    # start the validator with an empty genesis batch
-    entrypoint: "bash -c \"\
-        sawadm keygen && \
-        sawtooth keygen my_key && \
-        sawset genesis -k /root/.sawtooth/keys/my_key.priv && \
-        sawadm genesis config-genesis.batch && \
+      - 4004:4004
+    command: |
+      bash -c "
+        ls -al /etc/sawtooth/keys
+        if [ ! -f /etc/sawtooth/keys/validator.priv ]; then
+        echo 'start' &&
+        sawadm keygen &&
+        sawtooth keygen my_key &&
+        sawset genesis -k /root/.sawtooth/keys/my_key.priv &&
+        sawadm genesis config-genesis.batch
+        fi;
         sawtooth-validator -vv \
           --endpoint tcp://validator:8800 \
           --bind component:tcp://eth0:4004 \
-          --bind network:tcp://eth0:8800 \
-        \""
+          --bind network:tcp://eth0:8800
+      "
     volumes:
       - ./sawtooth_data:/var/lib/sawtooth
-    networks:
-      - public
-
-  shell:
-    image: hyperledger/sawtooth-all:1.0
-    container_name: sawtooth-shell-public
-    depends_on:
-      - rest-api
-    entrypoint: "bash -c \"\
-        sawtooth keygen && \
-        tail -f /dev/null \
-        \""
     networks:
       - public
 
   rest-api:
     image: hyperledger/sawtooth-rest-api:1.0
     container_name: sawtooth-rest-api-public
-    ports:
-      - "8008:8008"
+    expose:
+      - 8008
     depends_on:
       - validator
     entrypoint: sawtooth-rest-api -C tcp://validator:4004 --bind rest-api:8008
@@ -80,17 +72,17 @@ services:
     volumes:
       - ./data:/data/db
     ports:
-      - "27017:27017"
+      - 27017:27017
     networks:
       - public
 
   redis:
     container_name: redis
     image: redis
-    networks:
-      - public
     ports:
       - 6380:6379
+    networks:
+      - public
 
   sawtooth-tfa-sc-tp-go-kaztel:
     image: $ALLATRACK_DOCKER_ID/sawtooth-tfa-sc-tp-go
@@ -98,17 +90,17 @@ services:
     depends_on:
       - validator
       - rest-api
-    entrypoint: "tfa-service-client-tp-go --connect=tcp://validator:4004 --family=kaztel --version=0.1 --verbose"
+    entrypoint: tfa-service-client-tp-go --connect=tcp://validator:4004 --family=kaztel --version=0.1
     networks:
       - public
 
   sawtooth-tfa-sc-tp-go-egov:
-    image: $ALLATRACK_DOCKER_ID/sawtooth-tfa-sc-tp-go
+    image: allatrack/sawtooth-tfa-sc-tp-go
     container_name: sawtooth-tfa-sc-tp-g-egov
     depends_on:
       - validator
       - rest-api
-    entrypoint: "tfa-service-client-tp-go --connect=tcp://validator:4004 --family=egov --version=0.1 --verbose"
+    entrypoint: tfa-service-client-tp-go --connect=tcp://validator:4004 --family=egov--version=0.1
     networks:
       - public
 
@@ -118,7 +110,23 @@ services:
     depends_on:
       - validator
       - rest-api
-    entrypoint: "tfa-service-tp-go --connect=tcp://validator:4004 --family=tfa --version=0.1 --verbose"
+    entrypoint: tfa-service-tp-go --connect=tcp://validator:4004 --family=tfa --version=0.1
+    networks:
+      - public
+
+  proxy:
+    image: apache-basic_auth_proxy
+    container_name: sawtooth-api-proxy
+    expose:
+      - 80
+      - 443
+    ports:
+      - 8008:80
+#      - 443:443
+    command: "bash -c \"\ apachectl start && tail -f /dev/null \""
+    depends_on:
+      - rest-api
+      - validator
     networks:
       - public
 

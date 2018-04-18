@@ -63,8 +63,8 @@ enum PayloadType {
     CODE_VERIFY = 3;
 }
 
+// todo: переименовать sex в gender
 message SCPayload {
-
     PayloadType Action = 1;
     string PhoneNumber = 2;
     User PayloadUser = 3;

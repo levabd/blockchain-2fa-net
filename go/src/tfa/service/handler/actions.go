@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 )
 
-
 func ApplyCreate(address string, user *User, context *processor.Context) error {
 	errors := GetUserValidationErrors(user)
 	if len(errors) != 0 {

@@ -38,7 +38,9 @@ enum PayloadType {
     USER_CREATE = 0;
     USER_UPDATE = 1;
 }
-
+// todo: rename SCPayload to SPayload before
+// todo: next protocol buffer update
+// todo: переименовать sex в gender
 message SCPayload {
     PayloadType Action = 1;
     string PhoneNumber = 2;

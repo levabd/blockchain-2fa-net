@@ -58,6 +58,7 @@ docker rmi $(docker images | awk '$1 ~ /fabric/ { print $3}')
 ## Запуск сети
 ```
 docker-compose -f networks/network-init.yaml up -d
+docker-compose -f networks/network-start.yaml up -d
 ```
 ## Запуск в фоне обработчиков транзакций
 ```

@@ -7,8 +7,8 @@ const crypto = require('crypto')
 
 const _hash = (x) => crypto.createHash('sha512').update(x).digest('hex').toLowerCase()
 const cbor = require('cbor')
-// const FAMILY_NAME = 'tfa';
-const FAMILY_NAME = 'kaztel';
+const FAMILY_NAME = 'tfa';
+// const FAMILY_NAME = 'kaztel';
 const FAMILY_NAMESPACE = _hash(FAMILY_NAME).substring(0, 6)
 const FAMILY_VERSION = '0.1';
 const PORT = '8008';
@@ -23,8 +23,8 @@ const WebSocket = require('ws')
 var protobufLib = require('protocol-buffers')
 
 // pass a proto file as a buffer/string or pass a parsed protobuf-schema object
-var messages = protobufLib(fs.readFileSync('go/src/tfa/service_client/service_client.proto'))
-// var messages = protobufLib(fs.readFileSync('go/src/tfa/service/service.proto'))
+// var messages = protobufLib(fs.readFileSync('go/src/tfa/service_client/service_client.proto'))
+var messages = protobufLib(fs.readFileSync('go/src/tfa/service/service.proto'))
 
 const RECORd_NUMBER = 1
 let c = 0
@@ -72,11 +72,16 @@ const handle = function (transactions, i) {
 
     const randomPort = APIs[Math.floor(Math.random() * APIs.length)];
     request.post({
-        url: `http://127.0.0.1:${PORT}/batches`,
+        url: `http://127.0.0.1:${PORT}/sawtooth/batches`,
         body: batchListBytes,
+        auth: {
+            user: 'sawtooth',
+            pass: 'z92aGlTdLVYk6mR',
+            sendImmediately: true
+        },
         headers: {'Content-Type': 'application/octet-stream'}
     }, (err, response) => {
-
+        console.log('err', err);
         c++
         console.log('response', typeof response.body);
         if (response.body['error'] !== undefined) {
@@ -94,37 +99,37 @@ const handle = function (transactions, i) {
     })
 }
 
-let ws = new WebSocket(`ws:127.0.0.1:${PORT}/subscriptions`)
-ws.onopen = () => {
-    ws.send(JSON.stringify({
-        'action': 'subscribe',
-        'address_prefixes': [
-            _hash(FAMILY_NAME).substring(0, 6),
-        ]
-    }));
-}
-let start = new Date().getTime();
-let recordsAdded = 0
-ws.onmessage = (mess) => {
-    try {
-        const data = JSON.parse(mess.data)
-        if (data.state_changes.length) {
-            var end = new Date().getTime();
-            recordsAdded+=data.state_changes.length
-            console.log('8000 mess length', recordsAdded);
-            console.log("8000 Call to onmessage took " + (end - start) + " milliseconds.")
-        } else {
-            console.log('no changes');
-        }
-
-    } catch (e) {
-        console.log('error'), e;
-    }
-}
-
-ws.onclose = () => {
-    ws.send(JSON.stringify({'action': 'unsubscribe'}));
-}
+// let ws = new WebSocket(`ws:127.0.0.1:${PORT}/subscriptions`)
+// ws.onopen = () => {
+//     ws.send(JSON.stringify({
+//         'action': 'subscribe',
+//         'address_prefixes': [
+//             _hash(FAMILY_NAME).substring(0, 6),
+//         ]
+//     }));
+// }
+// let start = new Date().getTime();
+// let recordsAdded = 0
+// ws.onmessage = (mess) => {
+//     try {
+//         const data = JSON.parse(mess.data)
+//         if (data.state_changes.length) {
+//             var end = new Date().getTime();
+//             recordsAdded+=data.state_changes.length
+//             console.log('8000 mess length', recordsAdded);
+//             console.log("8000 Call to onmessage took " + (end - start) + " milliseconds.")
+//         } else {
+//             console.log('no changes');
+//         }
+//
+//     } catch (e) {
+//         console.log('error'), e;
+//     }
+// }
+//
+// ws.onclose = () => {
+//     ws.send(JSON.stringify({'action': 'unsubscribe'}));
+// }
 
 function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;

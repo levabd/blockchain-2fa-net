@@ -35,7 +35,12 @@ let address = FAMILY_NAMESPACE + phoneNumberPart
 // let address = 'cd242e44ef83f7a657e55ca23b438371a5e307ea5756bc2c0c0b572500ad7efec3aef6'
 
 request.get({
-    url: 'http://127.0.0.1:8008/state/' + address,
+    auth: {
+        user: 'sawtooth',
+        pass: 'z92aGlTdLVYk6mR',
+        sendImmediately: true
+    },
+    url: 'http://127.0.0.1:8008/sawtooth/state/cd242e44ef83f7a657e55ca23b438371a5e307ea5756bc2c0c0b572500ad7efec3aef6',
     headers: {'Content-Type': 'application/octet-stream'}
 }, (err, response) => {
     if (err) return console.log(err)
