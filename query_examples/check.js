@@ -26,9 +26,9 @@ const protobufLib = require('protocol-buffers')
 // const messages = protobufLib(fs.readFileSync('go/src/tfa/service_client/service_client.proto'))
 var messages = protobufLib(fs.readFileSync('go/src/tfa/service/service.proto'))
 
-console.log('length');
+let pn = '77059124921'
 // let pn = '77053237001'
-let pn = '77059127941'
+// let pn = '77059127941'
 const phoneNumberPart = _hash(pn.toString()).slice(-64)
 
 let address = FAMILY_NAMESPACE + phoneNumberPart
@@ -37,16 +37,16 @@ let address = FAMILY_NAMESPACE + phoneNumberPart
 request.get({
     auth: {
         user: 'sawtooth',
-        pass: 'z92aGlTdLVYk6mR',
-        sendImmediately: true
-    },
-    url: 'http://127.0.0.1:8008/sawtooth/state/cd242e44ef83f7a657e55ca23b438371a5e307ea5756bc2c0c0b572500ad7efec3aef6',
+        pass: 'z92aGlTdLVYk6mR'
+    },                                      // cd242e44ef83f7a657e55ca23b438371a5e307ea5756bc2c0c0b572500ad7efec3aef6
+    url: 'http://127.0.0.1:8008/sawtooth/state/'+ address,
     headers: {'Content-Type': 'application/octet-stream'}
 }, (err, response) => {
+    // console.log('err, response', err, response);
     if (err) return console.log(err)
-    console.log('response.body', response.body);
+    // console.log('response.body', response.body);
     const dataBase64 = JSON.parse(response.body).data
-    console.log('length', messages.User.decode(new Buffer(dataBase64, 'base64')));
+    console.log(messages.User.decode(new Buffer(dataBase64, 'base64')));
 });
 //.
 

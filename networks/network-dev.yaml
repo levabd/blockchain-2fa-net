@@ -60,6 +60,8 @@ services:
     container_name: sawtooth-rest-api-public
     expose:
       - 8008
+#    ports:
+#      - 8008:8008
     depends_on:
       - validator
     entrypoint: sawtooth-rest-api -C tcp://validator:4004 --bind rest-api:8008
@@ -115,7 +117,7 @@ services:
       - public
 
   proxy:
-    image: apache-basic_auth_proxy
+    image: sawtooth-apache-basic-auth-proxy
     container_name: sawtooth-api-proxy
     expose:
       - 80

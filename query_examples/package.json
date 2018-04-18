@@ -20,6 +20,8 @@
     "protocol-buffers": "^4.0.4",
     "request": "^2.83.0",
     "sawtooth-sdk": "^1.0.1",
+    "tunnel": "0.0.5",
+    "websocket": "^1.0.25",
     "ws": "^5.1.0"
   }
 }
