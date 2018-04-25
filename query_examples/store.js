@@ -5,7 +5,6 @@ const privateKey = context.newRandomPrivateKey()
 const signer = new CryptoFactory(context).newSigner(privateKey)
 const crypto = require('crypto')
 const _hash = (x) => crypto.createHash('sha512').update(x).digest('hex').toLowerCase()
-const cbor = require('cbor')
 const FAMILY_NAME = 'tfa';
 // const FAMILY_NAME = 'kaztel';
 const FAMILY_NAMESPACE = _hash(FAMILY_NAME).substring(0, 6)
@@ -20,33 +19,13 @@ const fs = require('fs')
 const WebSocket = require('ws')
 
 var protobufLib = require('protocol-buffers')
-var SocksProxyAgent = require('socks-proxy-agent');
 
 // pass a proto file as a buffer/string or pass a parsed protobuf-schema object
-// var messages = protobufLib(fs.readFileSync('go/src/tfa/service_client/service_client.proto'))
-var messages = protobufLib(fs.readFileSync('go/src/tfa/service/service.proto'))
+var messages = protobufLib(fs.readFileSync('go/src/tfa/service_client/service_client.proto'))
+// var messages = protobufLib(fs.readFileSync('go/src/tfa/service/service.proto'))
 
-const RECORd_NUMBER = 1
+const RECORd_NUMBER = 10
 let c = 0
-let e = 0
-const makeRequest = (data) => {
-    request.post({
-        url: `http://127.0.0.1:${PORT}/batches`,
-        body: batchListBytes,
-        headers: {'Content-Type': 'application/octet-stream'}
-    }, (err, response) => {
-        c++
-        console.log('c', c);
-        if (i === RECORd_NUMBER) {
-            console.log(response.body)
-        }
-    }, err => {
-        console.log('error', err);
-
-    })
-}
-// let start = new Date().getTime();
-
 const handle = function (transactions, i) {
 
     const batchHeaderBytes = protobuf.BatchHeader.encode({
@@ -72,7 +51,7 @@ const handle = function (transactions, i) {
 
     const randomPort = APIs[Math.floor(Math.random() * APIs.length)];
     request.post({
-        url: `http://127.0.0.1:${PORT}/sawtooth/batches`,
+        url: `http://127.0.0.1:${PORT}/batches`,
         body: batchListBytes,
         auth: {
             user: 'sawtooth',
@@ -88,34 +67,41 @@ const handle = function (transactions, i) {
             const code = response['error']['code']
             if (code === 31) {
                 console.log('make enoter request', err);
-                makeRequest(batchListBytes)
                 return;
             }
         }
 
         console.log(response.body)
-        // var end = new Date().getTime();
-        // console.log("8000 Call to onmessage took " + (end - start) + " milliseconds.")
     })
 }
 
-// let ws = new WebSocket(`ws:localhost:8008/subscriptions`)
-// ws.onopen = () => {
-//     ws.send(JSON.stringify({
+
+let start = new Date().getTime();
+let recordsAdded = 0
+
+// // WebSocket endpoint for the proxy to connect to
+// var endpoint = `ws://sawtooth:z92aGlTdLVYk6mR@127.0.0.1:${PORT}/sawtooth-ws/subscriptions`;
+// console.log('attempting to connect to WebSocket %j', endpoint);
+//
+// // initiate the WebSocket connection
+// var socket = new WebSocket(endpoint);
+//
+// socket.on('open', function () {
+//     console.log('"open" event!');
+//     socket.send(JSON.stringify({
 //         'action': 'subscribe',
 //         'address_prefixes': [
 //             _hash(FAMILY_NAME).substring(0, 6),
 //         ]
 //     }));
-// }
-let start = new Date().getTime();
-let recordsAdded = 0
-// ws.onmessage = (mess) => {
+// });
+//
+// socket.on('message', function (data, flags) {
 //     try {
-//         const data = JSON.parse(mess.data)
-//         if (data.state_changes.length) {
+//         const _data = JSON.parse(data)
+//         if (_data.state_changes.length) {
 //             var end = new Date().getTime();
-//             recordsAdded+=data.state_changes.length
+//             recordsAdded += _data.state_changes.length
 //             console.log('8000 mess length', recordsAdded);
 //             console.log("8000 Call to onmessage took " + (end - start) + " milliseconds.")
 //         } else {
@@ -123,117 +109,52 @@ let recordsAdded = 0
 //         }
 //
 //     } catch (e) {
-//         console.log('error'), e;
-//     }
-// }
-//
-// ws.onclose = () => {
-//     ws.send(JSON.stringify({'action': 'unsubscribe'}));
-// }
-var SocksProxyAgent = require('socks-proxy-agent');
-
-// SOCKS proxy to connect to
-var proxy = 'socks://sawtooth:z92aGlTdLVYk6mR@127.0.0.1:8008/sawtooth-ws';
-console.log('using proxy server %j', proxy);
-
-// WebSocket endpoint for the proxy to connect to
-var endpoint = 'ws://sawtooth:z92aGlTdLVYk6mR@127.0.0.1:8008/sawtooth-ws/subscriptions';
-console.log('attempting to connect to WebSocket %j', endpoint);
-
-// create an instance of the `SocksProxyAgent` class with the proxy server information
-var agent = new SocksProxyAgent(proxy);
-
-// initiate the WebSocket connection
-var socket = new WebSocket(endpoint);
-
-socket.on('open', function () {
-    console.log('"open" event!');
-    socket.send(JSON.stringify({
-        'action': 'subscribe',
-        'address_prefixes': [
-            _hash(FAMILY_NAME).substring(0, 6),
-        ]
-    }));
-});
-
-socket.on('message', function (data, flags) {
-    try {
-        const _data = JSON.parse(data)
-        if (_data.state_changes.length) {
-            var end = new Date().getTime();
-            recordsAdded += _data.state_changes.length
-            console.log('8000 mess length', recordsAdded);
-            console.log("8000 Call to onmessage took " + (end - start) + " milliseconds.")
-        } else {
-            console.log('no changes');
-        }
-
-    } catch (e) {
-        console.log('error');
-    }
-});
-
-// var WebSocketClient = require('websocket').client;
-// var client = new WebSocketClient();
-// var tunnel = require('tunnel');
-//
-// var tunnelingAgent = tunnel.httpOverHttp({
-//     proxy: {
-//         host: 'localhost',
-//         port: 80
+//         console.log('error');
 //     }
 // });
-//
-// var requestOptions = {
-//     agent: tunnelingAgent
-// };
-// client.on('connectFailed', function(error) {
-//     console.log('Connect Error: ' + error.toString());
-// });
-//
-// client.on('connect', function(connection) {
-//     console.log('WebSocket Client Connected');
-//     connection.on('error', function(error) {
-//         console.log("Connection Error: " + error.toString());
-//     });
-//     connection.on('close', function() {
-//         console.log('echo-protocol Connection Closed');
-//     });
-//     connection.on('message', function(message) {
-//         if (message.type === 'utf8') {
-//             console.log("Received: '" + message.utf8Data + "'");
-//         }
-//     });
-//
-//     function sendNumber() {
-//         if (connection.connected) {
-//             var number = Math.round(Math.random() * 0xFFFFFF);
-//             connection.sendUTF(number.toString());
-//             setTimeout(sendNumber, 1000);
-//         }
-//     }
-//     sendNumber();
-// });
-// client.connect('ws://localhost/sawtooth/subscriptions', null, null, null, requestOptions);
 
 function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+const makeFor = (familyName, payload, pn, cntr) => {
+    const phoneNumberPart = _hash(pn.toString()).slice(-64)
+    let address = _hash(familyName).substring(0, 6) + phoneNumberPart
+    const payloadBytes = messages.SCPayload.encode(payload)
+    const transactionHeaderBytes = protobuf.TransactionHeader.encode({
+        familyName: familyName,
+        familyVersion: FAMILY_VERSION,
+        inputs: [address],
+        outputs: [address],
+        signerPublicKey: signer.getPublicKey().asHex(),
+        batcherPublicKey: signer.getPublicKey().asHex(),
+        dependencies: [],
+        payloadSha512: createHash('sha512').update(payloadBytes).digest('hex')
+    }).finish()
+
+    const signature0 = signer.sign(transactionHeaderBytes)
+    const transaction = protobuf.Transaction.create({
+        header: transactionHeaderBytes,
+        headerSignature: signature0,
+        payload: payloadBytes
+    })
+    handle([transaction], cntr)
 }
 
 var tlist = []
 for (let i = 0; i < RECORd_NUMBER; i++) {
     (function (cntr) {
 
-        //var pn = '7705' + getRandomInt(999999, 9999999)
-        // var pn =  '77053237001'
-        var pn = '77059124191'
+        var pn = '7705' + getRandomInt(999999, 9999999)
+        // var pn =  '380934737177'
+        // var pn = '77053364711'
         var uin = getRandomInt(99999999999, 999999999999)
         const payload = {
             Action: 0, // create | update | delete
             PhoneNumber: pn,
             PayloadUser: {
                 PhoneNumber: pn,
-                Uin: uin,
+                Uin: `${uin}`,
                 Name: faker.name.findName(),
                 IsVerified: false,
                 Email: `doamin${faker.internet.email()}`,
@@ -241,51 +162,29 @@ for (let i = 0; i < RECORd_NUMBER; i++) {
                 Birthdate: 12452485,
             }
         }
-        const phoneNumberPart = _hash(pn.toString()).slice(-64)
+        makeFor('kaztel', payload, pn, cntr)
+        makeFor('tfa', payload, pn, cntr)
 
-        // let address = FAMILY_NAMESPACE + _hash(payload.User.Uin +payload.User.PhoneNumber).slice(-64)
-        let address = FAMILY_NAMESPACE + phoneNumberPart
-
-        // console.log('address', address);
-
-        const payloadBytes = messages.SCPayload.encode(payload)
-        console.log('payloadBytes.length.', payloadBytes.length);
-
-        // const payloadBytes = cbor.encode(payload)
-
-        const transactionHeaderBytes = protobuf.TransactionHeader.encode({
-            familyName: FAMILY_NAME,
-            familyVersion: FAMILY_VERSION,
-            inputs: [address],
-            outputs: [address],
-            signerPublicKey: signer.getPublicKey().asHex(),
-            // In this example, we're signing the batch with the same private key,
-            // but the batch can be signed by another party, in which case, the
-            // public key will need to be associated with that key.
-            batcherPublicKey: signer.getPublicKey().asHex(),
-            // In this example, there are no dependencies.  This list should include
-            // an previous transaction header signatures that must be applied for
-            // this transaction to successfully commit.
-            // For example,
-            // dependencies: ['540a6803971d1880ec73a96cb97815a95d374cbad5d865925e5aa0432fcf1931539afe10310c122c5eaae15df61236079abbf4f258889359c4d175516934484a'],
-            dependencies: [],
-            payloadSha512: createHash('sha512').update(payloadBytes).digest('hex')
-        }).finish()
-
-        const signature0 = signer.sign(transactionHeaderBytes)
-
-        const transaction = protobuf.Transaction.create({
-            header: transactionHeaderBytes,
-            headerSignature: signature0,
-            payload: payloadBytes
-        })
-        handle([transaction], cntr)
-
-        // if (tlist.length === 30) {
-        //     handle(tlist, cntr)
-        //     tlist = []
-        // } else {
-        //     tlist.push(transaction)
-        // }
+        // const phoneNumberPart = _hash(pn.toString()).slice(-64)
+        // let address = _hash(FAMILY_NAME).substring(0, 6) + phoneNumberPart
+        // const payloadBytes = messages.SCPayload.encode(payload)
+        // const transactionHeaderBytes = protobuf.TransactionHeader.encode({
+        //     familyName: FAMILY_NAME,
+        //     familyVersion: FAMILY_VERSION,
+        //     inputs: [address],
+        //     outputs: [address],
+        //     signerPublicKey: signer.getPublicKey().asHex(),
+        //     batcherPublicKey: signer.getPublicKey().asHex(),
+        //     dependencies: [],
+        //     payloadSha512: createHash('sha512').update(payloadBytes).digest('hex')
+        // }).finish()
+        //
+        // const signature0 = signer.sign(transactionHeaderBytes)
+        // const transaction = protobuf.Transaction.create({
+        //     header: transactionHeaderBytes,
+        //     headerSignature: signature0,
+        //     payload: payloadBytes
+        // })
+        // handle([transaction], cntr)
     })(i);
 }

@@ -35,6 +35,9 @@ docker run -v $(pwd)/sawtooth-core:/project/sawtooth-core \
 Выполняется из корня проекта
 ```
 ./scripts/build_go_images
+# залить в dockerhub
+docker push 5478545378/sawtooth-tfa-s-tp-go
+docker push 5478545378/sawtooth-tfa-sc-tp-go
 ``` 
 
 # Полезные команды
@@ -47,6 +50,10 @@ export GOPATH=$HOME/go:<путь к проекту>blockchain-2fa-net/go
 ```
 docker rm -f $(docker ps -aq) && yes | docker network prune
 ```
+## Остановить все контейнеры
+```
+docker stop $(docker ps -a -q)
+```
 ## Удалить все none контейнеры
 ```
 docker rmi $(docker images -f "dangling=true" -q)
@@ -57,11 +64,15 @@ docker rmi $(docker images | awk '$1 ~ /fabric/ { print $3}')
 ```
 ## Запуск сети
 ```
-docker-compose -f networks/network-init.yaml up -d
-docker-compose -f networks/network-start.yaml up -d
+docker-compose -f networks/network-dev.yaml up -d
 ```
 ## Запуск в фоне обработчиков транзакций
 ```
 nohup go run go/src/tfa/service/main.go --connect=tcp://172.18.0.2:4004 --family=tfa --version=0.1 --verbose  > /dev/null 2>&1 &
 nohup go run go/src/tfa/service_client/main.go --connect=tcp://172.18.0.2:4004 --family=kaztel --version=0.1 --verbose  > /dev/null 2>&1 &
+```
+## Сборка proto файлов для go программы
+```
+protoc --go_out=handler service_client.proto 
+protoc --go_out=handler service.proto 
 ```

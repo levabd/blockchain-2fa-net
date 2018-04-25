@@ -38,7 +38,6 @@ RUN apt-get update \
    && ldconfig \
    && ldconfig -p | grep zmq \
    && rm -rf /var/lib/apt/lists/*
-
 ADD tfa-service-client-tp-go /usr/bin/tfa-service-client-tp-go
 EXPOSE 4004/tcp
 CMD ["tfa-service-client-tp-go", "-C", "tcp://validator:4004"]
