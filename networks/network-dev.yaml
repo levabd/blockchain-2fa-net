@@ -55,17 +55,16 @@ services:
     networks:
       - public
 
-  rest-api:
+  rest.api:
     image: hyperledger/sawtooth-rest-api:1.0
     container_name: sawtooth-rest-api-public
-#    environment:
-#      - VIRTUAL_HOST=rest-api
-#      - VIRTUAL_PORT=82
-    ports:
-      - 8008:8008
+    environment:
+      - VIRTUAL_HOST=rest.api
+    expose:
+      - 8008
     depends_on:
       - validator
-    entrypoint: sawtooth-rest-api -C tcp://validator:4004 --bind rest-api:8008
+    entrypoint: sawtooth-rest-api -C tcp://validator:4004 --bind rest.api:8008
     networks:
       - public
 
@@ -74,7 +73,7 @@ services:
     container_name: sawtooth-tfa-sc-tp-go-kaztel
     depends_on:
       - validator
-      - rest-api
+      - rest.api
     entrypoint: tfa-service-client-tp-go --connect=tcp://validator:4004 --family=kaztel --version=0.1
     networks:
       - public
@@ -84,7 +83,7 @@ services:
     container_name: sawtooth-tfa-sc-tp-g-egov
     depends_on:
       - validator
-      - rest-api
+      - rest.api
     entrypoint: tfa-service-client-tp-go --connect=tcp://validator:4004 --family=egov --version=0.1
     networks:
       - public
@@ -94,54 +93,54 @@ services:
     container_name: sawtooth-tfa-s-tp-go
     depends_on:
       - validator
-      - rest-api
+      - rest.api
     entrypoint: tfa-service-tp-go --connect=tcp://validator:4004 --family=tfa --version=0.1
     networks:
       - public
 
-  sawtooth-tfa-entrance-backend:
-    container_name: sawtooth-tfa-entrance-backend
-    image: sawtooth-tfa-entrance-backend
-    depends_on:
-      - rest-api
-      - validator
-      - mongo
-      - redis
-    environment:
-      - PORT=443
-      - NODE_ENV=local
-      - APP_PATH=/home/peshkov/dev/blockchain/hyperledger/blockchain-2fa-backend
-      - LOG_PATH=/home/peshkov/dev/blockchain/hyperledger/blockchain-2fa-backend/logs
-      - API_KEY=aMiSMUvYmPGz9r
-      - API_KEY_FRONTEND=sgdfhdmgdkfgjk
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - SMS_USERNAME=2authorization
-      - SMS_PASSWORD=sHg0IBRFrd4j7Pc
-      - SMS_CALLBACK_TOKEN=r6eRWSC8UgWb
-      - KAZAHTELECOM_KEY=52d4f2d54f254
-      - GOOGLE_API_KEY=AIzaSyDR4G506UdebphK1mnMxv4eqTDpu_5JuiY
-      - FIREBASE_CLOUD_KEY=AAAANnj9ZGc:APA91bGkV3mkrIUZb6eK6rTGcN66edPymuMp5N3W0ebY9F0DdnOLfghhTFh44YYwe8YuaBMsEzBWoA-LHIwSgT6F6TpOkW2UBFxsoblSZiw7ugozjE8esnH1-m9IOzFmQeZTQhTE5nhw
-      - FIREBASE_CLOUD_ID=233958106215
-      - TFA_FAMILY_NAME=tfa
-      - TFA_FAMILY_VERSION=0.1
-      - KAZTEL_FAMILY_NAME=kaztel
-      - KAZTEL_FAMILY_VERSION=0.1
-      - EGOV_FAMILY_NAME=egov
-      - EGOV_FAMILY_VERSION=0.1
-      - VALIDATOR_REST_API=http://rest-api:8008
-      - VALIDATOR_REST_API_WS=rest-api:8008
-      - VALIDATOR_REST_API_USER=sawtooth
-      - VALIDATOR_REST_API_PASS=z92aGlTdLVYk6mR
-      - FRONTEND_API=http://allatrack-tfa.tk/#
-      - KAZTEL_CALLBACK_URL=http://localhost:8080/#
-      - EGOV_CALLBACK_URL=http://localhost:8080/#
-      - TELEGRAM_BOT_KEY=496129046:AAGMPrUnD2iOaoedbsWYBkUKL4t9UM0Wtzs
-      - MONGO_DB=mongodb://mongo/telegram_alert
-    networks:
-      - public
-    ports:
-      - 443:443
+#  sawtooth-tfa-entrance-backend:
+#    container_name: sawtooth-tfa-entrance-backend
+#    image: sawtooth-tfa-entrance-backend
+#    depends_on:
+#      - rest.api
+#      - validator
+#      - mongo
+#      - redis
+#    environment:
+#      - PORT=443
+#      - NODE_ENV=local
+#      - APP_PATH=/home/peshkov/dev/blockchain/hyperledger/blockchain-2fa-backend
+#      - LOG_PATH=/home/peshkov/dev/blockchain/hyperledger/blockchain-2fa-backend/logs
+#      - API_KEY=aMiSMUvYmPGz9r
+#      - API_KEY_FRONTEND=sgdfhdmgdkfgjk
+#      - REDIS_HOST=redis
+#      - REDIS_PORT=6379
+#      - SMS_USERNAME=2authorization
+#      - SMS_PASSWORD=sHg0IBRFrd4j7Pc
+#      - SMS_CALLBACK_TOKEN=r6eRWSC8UgWb
+#      - KAZAHTELECOM_KEY=52d4f2d54f254
+#      - GOOGLE_API_KEY=AIzaSyDR4G506UdebphK1mnMxv4eqTDpu_5JuiY
+#      - FIREBASE_CLOUD_KEY=AAAANnj9ZGc:APA91bGkV3mkrIUZb6eK6rTGcN66edPymuMp5N3W0ebY9F0DdnOLfghhTFh44YYwe8YuaBMsEzBWoA-LHIwSgT6F6TpOkW2UBFxsoblSZiw7ugozjE8esnH1-m9IOzFmQeZTQhTE5nhw
+#      - FIREBASE_CLOUD_ID=233958106215
+#      - TFA_FAMILY_NAME=tfa
+#      - TFA_FAMILY_VERSION=0.1
+#      - KAZTEL_FAMILY_NAME=kaztel
+#      - KAZTEL_FAMILY_VERSION=0.1
+#      - EGOV_FAMILY_NAME=egov
+#      - EGOV_FAMILY_VERSION=0.1
+#      - VALIDATOR_REST_API=http://localhost:81/sawtooth
+#      - VALIDATOR_REST_API_WS=localhost:81/sawtooth
+#      - VALIDATOR_REST_API_USER=sammy
+#      - VALIDATOR_REST_API_PASS=1111111
+#      - FRONTEND_API=http://allatrack-tfa.tk/#
+#      - KAZTEL_CALLBACK_URL=http://localhost:8080/#
+#      - EGOV_CALLBACK_URL=http://localhost:8080/#
+#      - TELEGRAM_BOT_KEY=496129046:AAGMPrUnD2iOaoedbsWYBkUKL4t9UM0Wtzs
+#      - MONGO_DB=mongodb://mongo/telegram_alert
+#    networks:
+#      - public
+#    ports:
+#      - 443:443
 
   sawtooth-tfa-entrance-frontend:
     container_name: sawtooth-tfa-entrance-frontend
@@ -160,8 +159,8 @@ services:
     environment:
       - API_URL_ENV=http://allatrack-tfa.tk:8080/
       - PORT=8080
-      - VALIDATOR_REST_API_HTTP=http://rest-api:8008
-      - VALIDATOR_REST_API_HOST=rest-api:8008
+      - VALIDATOR_REST_API_HTTP=http://rest.api:8008
+      - VALIDATOR_REST_API_HOST=rest.api:8008
       - VALIDATOR_REST_API_PORT=8008
       - VALIDATOR_REST_API_USER=sawtooth
       - VALIDATOR_REST_API_PASS=z92aGlTdLVYk6mR
@@ -169,7 +168,7 @@ services:
       - AUTH_ADMIN_SECRET=yoursecret
       - USE_PROXY_SERVER=false
     depends_on:
-      - rest-api
+      - rest.api
       - validator
       - mongo
     ports:
@@ -177,44 +176,27 @@ services:
     networks:
       - public
 
-#  proxy:
-#    image: sawtooth-apache-basic-auth-proxy
-#    container_name: sawtooth-tfa-api-proxy
-#    expose:
-#      - 80
-#      - 443
-#    ports:
-#      - 8008:80
-##      - 443:443
-#    command: "bash -c \"\ apachectl start && tail -f /dev/null \""
-#    depends_on:
-#      - rest-api
-#      - validator
-#    networks:
-#      - public
+  nginx:
+    image: nginx
+    container_name: nginx
+    ports:
+      - "81:80"
+    volumes:
+      - ./config/conf.d:/etc/nginx/conf.d
+      - ./config/.htpasswd:/etc/nginx/.htpasswd
+    networks:
+      - public
 
-#  proxy:
-#    image: proxy-gen
-#    container_name: nginx
-#    volumes:
-#      - ./config/nginx.conf:/etc/nginx/sites-enabled/rest_api.conf
-#    ports:
-#      - 8008:80
-#      - 4443:443
-#    links:
-#      - rest-api:rest-api
-#    depends_on:
-#      - rest-api
-#      - validator
-#    restart: on-failure
-
-#  nginx-proxy:
-#    image: jwilder/nginx-proxy
-#    ports:
-#      - "8008:80"
-#    volumes:
-#      - /var/run/docker.sock:/tmp/docker.sock
-##      - ./config/nginx.conf:/etc/nginx/conf.d/default.conf
+  dockergen:
+    image: jwilder/docker-gen
+    command: -notify-sighup nginx -watch /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
+    volumes_from:
+      - nginx
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./config/nginx.tmpl:/etc/docker-gen/templates/nginx.tmpl
+    networks:
+      - public
 
   mongo:
     container_name: mongo
@@ -233,9 +215,3 @@ services:
       - 6380:6379
     networks:
       - public
-
-
-#
-
-
-# 77056687420
