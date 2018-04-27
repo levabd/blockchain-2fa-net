@@ -64,9 +64,9 @@ docker rmi $(docker images | awk '$1 ~ /fabric/ { print $3}')
 ```
 ## Запуск сети
 ```
-docker-compose -f networks/network-dev.yaml up -d
+rm -rf networks/config/conf.d/* && docker-compose -f networks/network-dev.yaml up
 ```
-## Запуск в фоне обработчиков транзакций
+## Запуск в фоне обработчиков транзакций - только для DEBUG-га
 ```
 nohup go run go/src/tfa/service/main.go --connect=tcp://172.18.0.2:4004 --family=tfa --version=0.1 --verbose  > /dev/null 2>&1 &
 nohup go run go/src/tfa/service_client/main.go --connect=tcp://172.18.0.2:4004 --family=kaztel --version=0.1 --verbose  > /dev/null 2>&1 &
