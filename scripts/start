@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-
-# run the net
-echo 'start the 1 validator net'
-docker-compose -f networks/network.yaml up -d

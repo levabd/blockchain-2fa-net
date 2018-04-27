@@ -97,16 +97,16 @@ services:
       - APP_PATH=/home/peshkov/dev/blockchain/hyperledger/blockchain-2fa-backend
       - LOG_PATH=/home/peshkov/dev/blockchain/hyperledger/blockchain-2fa-backend/logs
       - API_KEY=$API_KEY
-      - API_KEY_FRONTEND=$API_KEY_FRONTEND
+      - API_KEY_FRONTEND=sgdfhdmgdkfgjk
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - SMS_USERNAME=$SMS_USERNAME
-      - SMS_PASSWORD=$SMS_PASSWORD
-      - SMS_CALLBACK_TOKEN=$SMS_CALLBACK_TOKEN
-      - KAZAHTELECOM_KEY=$KAZAHTELECOM_KEY
-      - GOOGLE_API_KEY=$GOOGLE_API_KEY
-      - FIREBASE_CLOUD_KEY=$FIREBASE_CLOUD_KEY
-      - FIREBASE_CLOUD_ID=$FIREBASE_CLOUD_ID
+      - SMS_USERNAME=2authorization
+      - SMS_PASSWORD=sHg0IBRFrd4j7Pc
+      - SMS_CALLBACK_TOKEN=r6eRWSC8UgWb
+      - KAZAHTELECOM_KEY=52d4f2d54f254
+      - GOOGLE_API_KEY=AIzaSyDR4G506UdebphK1mnMxv4eqTDpu_5JuiY
+      - FIREBASE_CLOUD_KEY=AAAANnj9ZGc:APA91bGkV3mkrIUZb6eK6rTGcN66edPymuMp5N3W0ebY9F0DdnOLfghhTFh44YYwe8YuaBMsEzBWoA-LHIwSgT6F6TpOkW2UBFxsoblSZiw7ugozjE8esnH1-m9IOzFmQeZTQhTE5nhw
+      - FIREBASE_CLOUD_ID=233958106215
       - TFA_FAMILY_NAME=tfa
       - TFA_FAMILY_VERSION=0.1
       - KAZTEL_FAMILY_NAME=kaztel
@@ -115,12 +115,12 @@ services:
       - EGOV_FAMILY_VERSION=0.1
       - VALIDATOR_REST_API=http://nginx/sawtooth
       - VALIDATOR_REST_API_WS=nginx/sawtooth-ws
-      - VALIDATOR_REST_API_USER=$VALIDATOR_REST_API_USER
-      - VALIDATOR_REST_API_PASS=$VALIDATOR_REST_API_PASS
+      - VALIDATOR_REST_API_USER=sammy
+      - VALIDATOR_REST_API_PASS=11111111
       - FRONTEND_API=http://allatrack-tfa.tk/#
       - KAZTEL_CALLBACK_URL=http://localhost:8080/#
       - EGOV_CALLBACK_URL=http://localhost:8080/#
-      - TELEGRAM_BOT_KEY=$TELEGRAM_BOT_KEY
+      - TELEGRAM_BOT_KEY=496129046:AAGMPrUnD2iOaoedbsWYBkUKL4t9UM0Wtzs
       - MONGO_DB=mongodb://mongo/telegram_alert
     networks:
       - public
@@ -148,8 +148,8 @@ services:
       - VALIDATOR_REST_API_HTTP=http://nginx/sawtooth
       - VALIDATOR_REST_API_HOST=nginx
       - VALIDATOR_REST_API_PORT=8008
-      - VALIDATOR_REST_API_USER=$VALIDATOR_REST_API_USER
-      - VALIDATOR_REST_API_PASS=$VALIDATOR_REST_API_PASS
+      - VALIDATOR_REST_API_USER=sammy
+      - VALIDATOR_REST_API_PASS=11111111
       - DATABASE=mongodb://mongo/twofa
       - AUTH_ADMIN_SECRET=yoursecret
       - USE_PROXY_SERVER=false
@@ -157,7 +157,7 @@ services:
       - ROOT_ADMIN_NAME=Root Administrator
       - ROOT_ADMIN_USERNAME=root
       - ROOT_ADMIN_EMAIL=root@tfa.kz
-      - ROOT_ADMIN_PASS=$ROOT_ADMIN_PASS
+      - ROOT_ADMIN_PASS=dfghi5j0rtg
     depends_on:
       - rest.api
       - validator
