@@ -45,11 +45,6 @@ const handle = function (transactions, i) {
         batches: [batch]
     }).finish()
 
-    const APIs = [
-        '8000', '8001', '8002'
-    ];
-
-    const randomPort = APIs[Math.floor(Math.random() * APIs.length)];
     request.post({
         url: `http://127.0.0.1:${PORT}/batches`,
         body: batchListBytes,
@@ -164,27 +159,5 @@ for (let i = 0; i < RECORd_NUMBER; i++) {
         }
         makeFor('kaztel', payload, pn, cntr)
         makeFor('tfa', payload, pn, cntr)
-
-        // const phoneNumberPart = _hash(pn.toString()).slice(-64)
-        // let address = _hash(FAMILY_NAME).substring(0, 6) + phoneNumberPart
-        // const payloadBytes = messages.SCPayload.encode(payload)
-        // const transactionHeaderBytes = protobuf.TransactionHeader.encode({
-        //     familyName: FAMILY_NAME,
-        //     familyVersion: FAMILY_VERSION,
-        //     inputs: [address],
-        //     outputs: [address],
-        //     signerPublicKey: signer.getPublicKey().asHex(),
-        //     batcherPublicKey: signer.getPublicKey().asHex(),
-        //     dependencies: [],
-        //     payloadSha512: createHash('sha512').update(payloadBytes).digest('hex')
-        // }).finish()
-        //
-        // const signature0 = signer.sign(transactionHeaderBytes)
-        // const transaction = protobuf.Transaction.create({
-        //     header: transactionHeaderBytes,
-        //     headerSignature: signature0,
-        //     payload: payloadBytes
-        // })
-        // handle([transaction], cntr)
     })(i);
 }

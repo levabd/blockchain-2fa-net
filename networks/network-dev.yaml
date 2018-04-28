@@ -151,7 +151,7 @@ services:
       - VALIDATOR_REST_API_USER=$VALIDATOR_REST_API_USER
       - VALIDATOR_REST_API_PASS=$VALIDATOR_REST_API_PASS
       - DATABASE=mongodb://mongo/twofa
-      - AUTH_ADMIN_SECRET=yoursecret
+      - AUTH_ADMIN_SECRET=$AUTH_ADMIN_SECRET
       - USE_PROXY_SERVER=false
       - INIT_ROOT_ADMIN=true
       - ROOT_ADMIN_NAME=Root Administrator
