@@ -1,4 +1,5 @@
 data
+networks/data
 .idea
 sawtooth-core
 tmp
