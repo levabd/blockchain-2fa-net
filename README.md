@@ -64,7 +64,14 @@ docker rmi $(docker images | awk '$1 ~ /fabric/ { print $3}')
 ```
 ## Запуск сети
 ```
-rm -rf networks/config/conf.d/* && docker-compose -f networks/network-dev.yaml up
+# заполните переменные и выполните
+source ./scripts/export_vars.sh && \
+rm -rf networks/config/conf.d/* && \
+docker-compose -f networks/network-dev.yaml up -d
+
+source ./tmp/export_vars.sh && \
+rm -rf networks/config/conf.d/* && \
+docker-compose -f networks/network-dev.yaml up -d
 ```
 ## Запуск в фоне обработчиков транзакций - только для DEBUG-га
 ```

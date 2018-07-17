@@ -1,3 +1,0 @@
-proxy_set_header Host $http_host;
-
-include proxy_params_without_host;

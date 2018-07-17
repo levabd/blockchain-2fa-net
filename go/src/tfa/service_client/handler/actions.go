@@ -29,6 +29,8 @@ func ApplyCreateUser(address string, user *User, context *processor.Context) err
 		IsVerified:     user.IsVerified,
 		Birthdate:      user.Birthdate,
 		Sex:            user.Sex,
+		//UpdatedAt:      user.UpdatedAt,
+		//UpdatedBy:      user.UpdatedBy,
 		Logs:           user.Logs,
 		Uin:            user.Uin,
 		AdditionalData: user.AdditionalData,
@@ -48,6 +50,10 @@ func ApplyUpdateUser(address string, userUpdateData *User, context *processor.Co
 		return &processor.InvalidTransactionError{Msg: string(errorsMarshaled)}
 	}
 
+	//if userUpdateData.UpdatedBy == "" {
+	//	return &processor.InvalidTransactionError{Msg: string("UpdatedBy must be set.")}
+	//}
+
 	userOld, err := getUserByAddress(address, context)
 	if err != nil {
 		return &processor.InvalidTransactionError{Msg: err.Error()}
@@ -57,6 +63,9 @@ func ApplyUpdateUser(address string, userUpdateData *User, context *processor.Co
 	userOld.Email = userUpdateData.Email
 	userOld.Sex = userUpdateData.Sex
 	userOld.Uin = userUpdateData.Uin
+	// todo finish update tasks
+	//userOld.UpdatedAt = userUpdateData.UpdatedAt
+	//userOld.UpdatedBy = userUpdateData.UpdatedBy
 	userOld.IsVerified = userUpdateData.IsVerified
 	userOld.Birthdate = userUpdateData.Birthdate
 	userOld.AdditionalData = userUpdateData.AdditionalData

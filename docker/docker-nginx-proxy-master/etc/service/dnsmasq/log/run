@@ -1,6 +1,0 @@
-#!/bin/bash -e
-
-mkdir -p /var/log/dnsmasq
-chown nobody:nogroup /var/log/dnsmasq
-
-exec chpst -u nobody:nogroup svlogd -tt /var/log/dnsmasq

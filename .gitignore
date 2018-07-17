@@ -1,5 +1,6 @@
 data
 networks/data
+networks/sawtooth_data
 .idea
 sawtooth-core
 tmp
