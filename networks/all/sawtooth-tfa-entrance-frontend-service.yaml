@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f network-dev.yaml
+    kompose.version: 1.1.0 (36652f6)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: sawtooth-tfa-entrance-frontend
+  name: sawtooth-tfa-entrance-frontend
+spec:
+  type: NodePort
+  ports:
+  - name: "80"
+    port: 80
+    targetPort: 80
+  selector:
+    io.kompose.service: sawtooth-tfa-entrance-frontend
+status:
+  loadBalancer: {}

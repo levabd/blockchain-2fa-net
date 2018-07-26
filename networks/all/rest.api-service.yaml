@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f network-dev.yaml --emptyvols
+    kompose.version: 1.1.0 (36652f6)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: rest-api
+  name: rest-api
+spec:
+  type: NodePort
+  ports:
+  - name: "8008"
+    port: 8008
+    targetPort: 8008
+  selector:
+    io.kompose.service: rest-api
+status:
+  loadBalancer: {}

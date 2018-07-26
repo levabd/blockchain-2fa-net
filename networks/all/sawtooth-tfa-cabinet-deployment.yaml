@@ -1,0 +1,57 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f network-dev.yaml --emptyvols
+    kompose.version: 1.1.0 (36652f6)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: sawtooth-tfa-cabinet
+  name: sawtooth-tfa-cabinet
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.service: sawtooth-tfa-cabinet
+    spec:
+      hostNetwork: true
+      containers:
+      - env:
+        - name: API_URL_ENV
+          value: http://allatrack-tfa.tk:8080/
+        - name: AUTH_ADMIN_SECRET
+        - name: DATABASE
+          value: mongodb://mongo/twofa
+        - name: INIT_ROOT_ADMIN
+          value: "true"
+        - name: PORT
+          value: "8080"
+        - name: ROOT_ADMIN_EMAIL
+          value: root@tfa.kz
+        - name: ROOT_ADMIN_NAME
+          value: Root Administrator
+        - name: ROOT_ADMIN_PASS
+        - name: ROOT_ADMIN_USERNAME
+          value: root
+        - name: USE_PROXY_SERVER
+          value: "false"
+        - name: VALIDATOR_REST_API_HOST
+          value: nginx
+        - name: VALIDATOR_REST_API_HTTP
+          value: http://nginx/sawtooth
+        - name: VALIDATOR_REST_API_PASS
+        - name: VALIDATOR_REST_API_PORT
+          value: "8008"
+        - name: VALIDATOR_REST_API_USER
+        - name: VALIDATOR_REST_API_WS
+          value: nginx/sawtooth-ws
+        image: allatrack/sawtooth-tfa-cabinet
+        name: sawtooth-tfa-cabinet
+        ports:
+        - containerPort: 8080
+        resources: {}
+      restartPolicy: Always
+status: {}

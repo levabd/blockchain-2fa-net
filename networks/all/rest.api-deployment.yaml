@@ -1,0 +1,38 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f network-dev.yaml --emptyvols
+    kompose.version: 1.1.0 (36652f6)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: rest-api
+  name: rest-api
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.service: rest-api
+    spec:
+      hostNetwork: true
+      containers:
+      - command:
+        - sawtooth-rest-api
+        - -C
+        - tcp://validator:4004
+        - --bind
+        - localhost:8008
+        env:
+        - name: VIRTUAL_HOST
+          value: rest-api
+        image: hyperledger/sawtooth-rest-api:1.0
+        name: sawtooth-rest-api-public
+        ports:
+        - containerPort: 8008
+#          hostPort: 8008
+        resources: {}
+      restartPolicy: Always
+status: {}

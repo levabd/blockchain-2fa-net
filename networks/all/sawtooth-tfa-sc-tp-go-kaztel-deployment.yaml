@@ -1,0 +1,31 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f network-dev.yaml --emptyvols
+    kompose.version: 1.1.0 (36652f6)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: sawtooth-tfa-sc-tp-go-kaztel
+  name: sawtooth-tfa-sc-tp-go-kaztel
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.service: sawtooth-tfa-sc-tp-go-kaztel
+    spec:
+      hostNetwork: true
+      containers:
+      - command:
+        - tfa-service-client-tp-go
+        - --connect=tcp://validator:4004
+        - --family=kaztel
+        - --version=0.1
+        image: allatrack/sawtooth-tfa-sc-tp-go
+        name: sawtooth-tfa-sc-tp-go-kaztel
+        resources: {}
+      restartPolicy: Always
+status: {}

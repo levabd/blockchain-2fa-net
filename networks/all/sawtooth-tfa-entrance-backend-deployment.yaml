@@ -1,0 +1,79 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f network-dev.yaml
+    kompose.version: 1.1.0 (36652f6)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: sawtooth-tfa-entrance-backend
+  name: sawtooth-tfa-entrance-backend
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.service: sawtooth-tfa-entrance-backend
+    spec:
+      hostNetwork: true
+      containers:
+      - env:
+        - name: API_KEY
+        - name: API_KEY_FRONTEND
+          value: http://localhost:8080/#
+        - name: APP_PATH
+          value: /root/blockchain-2fa-backend
+        - name: EGOV_CALLBACK_URL
+          value: http://localhost:80/#
+        - name: EGOV_FAMILY_NAME
+          value: egov
+        - name: EGOV_FAMILY_VERSION
+          value: "0.1"
+        - name: FIREBASE_CLOUD_ID
+        - name: FIREBASE_CLOUD_KEY
+        - name: FRONTEND_API
+          value: http://allatrack-tfa.tk/#
+        - name: GOOGLE_API_KEY
+        - name: KAZAHTELECOM_KEY
+        - name: KAZTEL_CALLBACK_URL
+          value: http://localhost:80/#
+        - name: KAZTEL_FAMILY_NAME
+          value: kaztel
+        - name: KAZTEL_FAMILY_VERSION
+          value: "0.1"
+        - name: LOG_PATH
+          value: /root/blockchain-2fa-backend/logs
+        - name: MONGO_DB
+          value: mongodb://mongo/telegram_alert
+        - name: NODE_ENV
+          value: local
+        - name: PORT
+          value: "443"
+        - name: REDIS_HOST
+          value: redis
+        - name: REDIS_PORT
+          value: "6379"
+        - name: SMS_CALLBACK_TOKEN
+        - name: SMS_PASSWORD
+        - name: SMS_USERNAME
+        - name: TELEGRAM_BOT_KEY
+          value: "123"
+        - name: TFA_FAMILY_NAME
+          value: tfa
+        - name: TFA_FAMILY_VERSION
+          value: "0.1"
+        - name: VALIDATOR_REST_API
+          value: http://allatrack-tfa.tk/sawtooth
+        - name: VALIDATOR_REST_API_PASS
+        - name: VALIDATOR_REST_API_USER
+        - name: VALIDATOR_REST_API_WS
+          value: nginx/sawtooth-ws
+        image: allatrack/sawtooth-tfa-entrance-backend
+        name: tfa-entrance-backend
+        ports:
+        - containerPort: 443
+        resources: {}
+      restartPolicy: Always
+status: {}
