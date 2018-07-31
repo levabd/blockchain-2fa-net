@@ -1,0 +1,178 @@
+# Based on https://github.com/jwilder/docker-gen/blob/master/templates/nginx.tmpl
+ {{ range $host, $containersByHost := groupByMulti $ "Env.VIRTUAL_HOST" "," }}
+ {{ range $url, $containers := groupByMulti $containersByHost "Env.VIRTUAL_URL" "," }}
+upstream {{ $host }}{{ replace $url "/" "-" -1 }}u {
+    {{ range $index, $value := $containers }}
+        {{ $addrLen := len $value.Addresses }}
+        {{ if $value.Networks }}
+            {{ $network := first (where $value.Networks "Name" $value.Env.VIRTUAL_NETWORK) }}
+            {{ $network := when (not $network) (first $value.Networks) $network }}
+            {{/* If only 1 port exposed, use that */}}
+            {{ if eq $addrLen 1 }}
+                {{ with $address := index $value.Addresses 0 }}
+                    # {{$value.Name}}
+                    server {{ $network.IP }}:{{ $address.Port }};
+                {{ end }}
+            {{/* If more than one port exposed, use the one matching VIRTUAL_PORT env var */}}
+            {{ else if $value.Env.VIRTUAL_PORT }}
+                {{ range $i, $address := $value.Addresses }}
+                    {{ if eq $address.Port $value.Env.VIRTUAL_PORT }}
+                    # {{$value.Name}}
+                    server {{ $network.IP }}:{{ $address.Port }};
+                    {{ end }}
+                {{ end }}
+            {{/* Else default to standard web port 80 */}}
+            {{ else }}
+                {{ range $i, $address := $value.Addresses }}
+                    {{ if eq $address.Port "80" }}
+                    # {{$value.Name}}
+                    server {{ $network.IP }}:{{ $address.Port }};
+                    {{ end }}
+                {{ end }}
+            {{ end }}
+         {{ else }}
+            {{/* If only 1 port exposed, use that */}}
+            {{ if eq $addrLen 1 }}
+                {{ with $address := index $value.Addresses 0 }}
+                    # {{$value.Name}}
+                    server {{ $address.IP }}:{{ $address.Port }};
+                {{ end }}
+            {{/* If more than one port exposed, use the one matching VIRTUAL_PORT env var */}}
+            {{ else if $value.Env.VIRTUAL_PORT }}
+                {{ range $i, $address := $value.Addresses }}
+                    {{ if eq $address.Port $value.Env.VIRTUAL_PORT }}
+                    # {{$value.Name}}
+                    server {{ $address.IP }}:{{ $address.Port }};
+                    {{ end }}
+                {{ end }}
+            {{/* Else default to standard web port 80 */}}
+            {{ else }}
+                {{ range $i, $address := $value.Addresses }}
+                    {{ if eq $address.Port "80" }}
+                    # {{$value.Name}}
+                    server {{ $address.IP }}:{{ $address.Port }};
+                    {{ end }}
+                {{ end }}
+            {{ end }}
+        {{ end }}
+    {{ end }}
+}
+{{ end }}
+ {{ range $alias, $containers := groupByMulti $containersByHost "Env.VIRTUAL_ALIAS" "," }}
+upstream {{ $host }}{{ replace $alias "/" "-" -1 }}a {
+    {{ range $index, $value := $containers }}
+        {{ $addrLen := len $value.Addresses }}
+        {{ if $value.Networks }}
+            {{ $network := first (where $value.Networks "Name" $value.Env.VIRTUAL_NETWORK) }}
+            {{ $network := when (not $network) (first $value.Networks) $network }}
+            {{/* If only 1 port exposed, use that */}}
+            {{ if eq $addrLen 1 }}
+                {{ with $address := index $value.Addresses 0 }}
+                   # {{$value.Name}}
+                   server {{ $network.IP }}:{{ $address.Port }};
+                {{ end }}
+            {{/* If more than one port exposed, use the one matching VIRTUAL_PORT env var */}}
+            {{ else if $value.Env.VIRTUAL_PORT }}
+                {{ range $i, $address := $value.Addresses }}
+                   {{ if eq $address.Port $value.Env.VIRTUAL_PORT }}
+                   # {{$value.Name}}
+                   server {{ $network.IP }}:{{ $address.Port }};
+                   {{ end }}
+                {{ end }}
+            {{/* Else default to standard web port 80 */}}
+            {{ else }}
+                {{ range $i, $address := $value.Addresses }}
+                    {{ if eq $address.Port "80" }}
+                    # {{$value.Name}}
+                    server {{ $network.IP }}:{{ $address.Port }};
+                    {{ end }}
+                {{ end }}
+            {{ end }}
+         {{ else }}
+            {{/* If only 1 port exposed, use that */}}
+            {{ if eq $addrLen 1 }}
+                {{ with $address := index $value.Addresses 0 }}
+                   # {{$value.Name}}
+                   server {{ $address.IP }}:{{ $address.Port }};
+                {{ end }}
+            {{/* If more than one port exposed, use the one matching VIRTUAL_PORT env var */}}
+            {{ else if $value.Env.VIRTUAL_PORT }}
+                {{ range $i, $address := $value.Addresses }}
+                   {{ if eq $address.Port $value.Env.VIRTUAL_PORT }}
+                   # {{$value.Name}}
+                   server {{ $address.IP }}:{{ $address.Port }};
+                   {{ end }}
+                {{ end }}
+            {{/* Else default to standard web port 80 */}}
+            {{ else }}
+                {{ range $i, $address := $value.Addresses }}
+                    {{ if eq $address.Port "80" }}
+                    # {{$value.Name}}
+                    server {{ $address.IP }}:{{ $address.Port }};
+                    {{ end }}
+                {{ end }}
+            {{ end }}
+        {{ end }}
+    {{ end }}
+}
+{{ end }}
+ {{ if (and (exists (printf "/ssl/%s.crt" $host)) (exists (printf "/ssl/%s.key" $host))) }}
+server {
+    server_name {{ $host }};
+     {{ if $.Env.LETSENCRYPT_EMAIL }}
+    location /.well-known/acme-challenge/ {
+        root /ssl/webroot/{{ $host }};
+    }
+    {{ end }}
+     {{ if (exists (printf "/ssl/%s_nonssl.conf" $host)) }}
+    include /ssl/{{ $host }}_nonssl.conf;
+    {{ end }}
+     location / {
+        return 301 https://$host$request_uri;
+    }
+}
+ server {
+    listen 443 ssl;
+    ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+    ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA;
+    ssl_prefer_server_ciphers on;
+     ssl_certificate /ssl/{{ $host }}.crt;
+    ssl_certificate_key /ssl/{{ $host }}.key;
+     {{ if (exists (printf "/ssl/%s_ssl.conf" $host)) }}
+    include /ssl/{{ $host }}_ssl.conf;
+    {{ end }}
+     add_header Strict-Transport-Security "max-age=31536000";
+     server_name {{ $host }};
+{{ else }}
+server {
+    listen 80;
+     server_name {{ $host }} *.{{ $host }};
+{{ end }}
+     access_log /var/log/nginx/{{ $host }}_access.log;
+     {{ if $.Env.LETSENCRYPT_EMAIL }}
+    location /.well-known/acme-challenge/ {
+        root /ssl/webroot/{{ $host }};
+    }
+    {{ end }}
+ {{ range $url, $containers := groupByMulti $containersByHost "Env.VIRTUAL_URL" "," }}
+    location {{ $url }} {
+        # / at the end of the proxy_pass means that all requests to this
+        # location are proxied to the root of the container.
+        proxy_pass http://{{ $host }}{{ replace $url "/" "-" -1 }}u/;
+        # Making sure Location always has external scheme.
+        proxy_redirect http://{{ $host }}/ /;
+        proxy_redirect https://{{ $host }}/ /;
+    }
+{{ end }}
+ {{ range $alias, $containers := groupByMulti $containersByHost "Env.VIRTUAL_ALIAS" "," }}
+    location {{ $alias }} {
+        # No / at the end of the proxy_pass means that all requests to this
+        # location are proxied to the same location of the container.
+        proxy_pass http://{{ $host }}{{ replace $alias "/" "-" -1 }}a;
+        # Making sure Location always has external scheme.
+        proxy_redirect http://{{ $host }}/ /;
+        proxy_redirect https://{{ $host }}/ /;
+    }
+{{ end }}
+}
+{{ end }}
