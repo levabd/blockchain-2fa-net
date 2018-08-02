@@ -1,4 +1,5 @@
 
+
 # Building Transaction Families 
 
 ## Инструкция для разработчика 
@@ -68,7 +69,7 @@ docker rmi $(docker images | awk '$1 ~ /fabric/ { print $3}')
 source ./scripts/export_vars.sh && \
 rm -rf networks/config/conf.d/* && \
 docker-compose -f networks/network-dev.yaml up -d
-
+-------------- START DEV NET -------------------
 source ./tmp/export_vars.sh && \
 rm -rf networks/config/conf.d/* && \
 docker-compose -f networks/network-dev.yaml up -d
